@@ -1,5 +1,6 @@
 # encoding: utf-8
-require File.expand_path('../lib/hub/version', __FILE__)
+$: << File.expand_path('../lib', __FILE__)
+require 'hub/version'
 
 Gem::Specification.new do |s|
   s.name              = "hub"
