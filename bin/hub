@@ -3,6 +3,7 @@
 # hub(1)
 # alias git=hub
 
+$: << File.expand_path('../../lib', __FILE__)
 require 'hub'
 ENV['PATH'] = "#{File.expand_path('../../gitflow', __FILE__)}:#{ENV['PATH']}"
 Hub::Runner.execute(*ARGV)
