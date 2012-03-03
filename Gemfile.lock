@@ -1,0 +1,14 @@
+PATH
+  remote: .
+  specs:
+    hub (1.8.3)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  hub!
