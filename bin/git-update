@@ -4,7 +4,7 @@
 #/     git update -- do everything to fetch the latest, recursively
 #/
 #/ SYNOPSIS
-#/     git update
+#/     git update [args to git pull]
 
 # figure out the project root under which bin, lib live
 shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
@@ -14,7 +14,7 @@ source "$shome/bin/_prime" "$@"
 
 # entry point
 function main {
-  git pull
+  git pull "$@"
   git submodule update --init --recursive
 }
 
