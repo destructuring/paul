@@ -1,0 +1,29 @@
+#!/bin/bash
+
+function git_serve {
+  local magic='XXXXXXXX'
+
+  local last_port
+  local p
+  local a
+  for p in {9419..9999}; do 
+    echo "$magic $p"
+    git daemon --reuseaddr --verbose  --port=$p --base-path=. --export-all ./.git 2>&1
+    if [[ "$?" != 128 ]]; then # cannot bind to port
+      exit 0
+    fi
+  done | while read -r a status; do 
+    if [[ "$status" = 'Ready to rumble' ]]; then 
+      local git_pid="${a#[}"
+      git_pid="${git_pid%]}"
+      git cache "$last_port" "$@"
+      local save_exit="$?"
+      kill "$git_pid"
+      return "$save_exit"
+    elif [[ "$a" = "$magic" ]]; then 
+      last_port="$status"
+    fi
+  done
+}
+
+git_serve "$@"
