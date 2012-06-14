@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 function git_cache {
   local git_port="$1"; shift
@@ -6,12 +6,22 @@ function git_cache {
   local pth_control="$HOME/.ssh/master-%r@%h:%p-$git_port"
   local pth_cache=".cache/$(basename "$(git config --list | grep remote.origin.url | cut -d= -f2-)")"
 
-  rm -f $git_port.txt
-  ssh -o ControlPath=$pth_control -o ControlMaster=auto -o ExitOnForwardFailure=yes -R0:localhost:$git_port -N -f $nm_remote > $git_port.txt 2>&1
+  local attempts=0
+  while true; do
+    attempts="$((attempts + 1))"
+    if [[ "$attempts" > 5 ]]; then
+      exit 1
+    fi
+    ssh -o ControlPath=$pth_control -o ControlMaster=auto -o ExitOnForwardFailure=yes -R0:localhost:$git_port -N -f $nm_remote > $git_port.txt 2>&1
+    if ssh -o ControlPath=$pth_control -O check $nm_remote; then
+      break
+    fi
+  done
+
   remote_port="$(awk '$1 == "Allocated" { print $3 }' $git_port.txt)"
   rm -f $git_port.txt
 
-  ssh -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && git init --bare && { git remote rm cache || true; } && git remote add cache git://localhost:$remote_port/ && git fetch cache"
+  ssh -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && { git remote rm cache || true; } && git remote add cache git://localhost:$remote_port/ && git fetch cache"
   ssh -o ControlPath=$pth_control -O exit $nm_remote
 }
 
