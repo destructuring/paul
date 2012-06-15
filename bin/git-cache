@@ -18,10 +18,11 @@ function git_cache {
     fi
   done
 
-  remote_port="$(awk '$1 == "Allocated" { print $3 }' $git_port.txt)"
+  local remote_port="$(awk '$1 == "Allocated" { print $3 }' $git_port.txt)"
   rm -f $git_port.txt
 
-  ssh -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && { git remote rm cache || true; } && git remote add cache git://localhost:$remote_port/ && git fetch cache"
+  timestamp="$(date +%s)"
+  ssh -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add cache$timestamp git://localhost:$remote_port/ && git fetch cache$timestamp"
   ssh -o ControlPath=$pth_control -O exit $nm_remote
 }
 
