@@ -12,8 +12,8 @@ function git_cache {
     if [[ "$attempts" > 5 ]]; then
       exit 1
     fi
-    ssh -o ControlPath=$pth_control -o ControlMaster=auto -o ExitOnForwardFailure=yes -R0:localhost:$git_port -N -f $nm_remote > $git_port.txt 2>&1
-    if ssh -o ControlPath=$pth_control -O check $nm_remote; then
+    ssh -n -o ControlPath=$pth_control -o ControlMaster=auto -o ExitOnForwardFailure=yes -R0:localhost:$git_port -N -f $nm_remote > $git_port.txt 2>&1
+    if ssh -n -o ControlPath=$pth_control -O check $nm_remote; then
       break
     fi
   done
@@ -22,8 +22,8 @@ function git_cache {
   rm -f $git_port.txt
 
   timestamp="$(date +%s)"
-  ssh -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add cache$timestamp git://localhost:$remote_port/ && git fetch cache$timestamp"
-  ssh -o ControlPath=$pth_control -O exit $nm_remote
+  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add cache$timestamp git://localhost:$remote_port/ && git fetch cache$timestamp"
+  ssh -n -o ControlPath=$pth_control -O exit $nm_remote
 }
 
 if [[ -z "$_HF_CACHE" ]]; then
