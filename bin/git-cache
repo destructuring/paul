@@ -22,7 +22,7 @@ function git_cache {
   rm -f $git_port.txt
 
   timestamp="$(date +%s)"
-  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add cache$timestamp git://localhost:$remote_port/ && git fetch cache$timestamp"
+  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add cache$timestamp git://localhost:$remote_port/ && git fetch -q cache$timestamp"
   ssh -n -o ControlPath=$pth_control -O exit $nm_remote
 }
 
