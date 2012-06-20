@@ -50,8 +50,17 @@ function git_cache {
   local remote_port="$(awk '$1 == "Allocated" { print $3 }' $git_port.txt)"
   rm -f $git_port.txt
 
-  timestamp="$(date +%s)"
-  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add cache$timestamp git://localhost:$remote_port/ && git fetch -q cache$timestamp"
+  local git_head
+  local git_ref=$(cat .git/HEAD)
+  if echo "$git_ref" | egrep -q "^ref:"; then
+    git_head=$(git show-ref --hash "$(echo "$git_ref" | awk '{print $2}')")
+  else
+    git_head=$git_ref
+  fi
+
+  local timestamp="cache$(date +%s)"
+
+  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add $timestamp git://localhost:$remote_port/ && git -q fetch $timestamp && git tag $timestamp $git_head"
   ssh -n -o ControlPath=$pth_control -O exit $nm_remote
 }
 
