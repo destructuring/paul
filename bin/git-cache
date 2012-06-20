@@ -19,16 +19,18 @@ function main {
     exit 1
   fi
 
+  : ${_HF_CACHE:=}
   if [[ -z "$_HF_CACHE" ]]; then
-    export _HF_CACHE=1
-    git serve git cache -- "$@"
+    _HF_CACHE=1 git serve git cache "$@"
   else
     git_cache "$@"
   fi
 }
 
 function git_cache {
-  local git_port="$1"; shift
+  local git_port="${!#}"
+
+  set "${@:1:$(($# - 1))}"
   local nm_remote="$1"; shift
   local pth_control="$HOME/.ssh/master-%r@%h:%p-$git_port"
   local pth_cache=".cache/$(basename "$(git config --list | grep remote.origin.url | cut -d= -f2-)")"
