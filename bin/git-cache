@@ -1,4 +1,31 @@
-#!/bin/bash -e
+#!/bin/bash
+
+#/ NAME
+#/     git-cache -- run git serve and then sync git repo to a remote host
+#/
+#/ SYNOPSIS
+#/     git cache server
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/bin/_prime" "$@"
+
+# entry point
+function main {
+  if [[ "$#" = 0 ]]; then
+    logger_fatal "must specify a server"
+    exit 1
+  fi
+
+  if [[ -z "$_HF_CACHE" ]]; then
+    export _HF_CACHE=1
+    git serve git cache -- "$@"
+  else
+    git_cache "$@"
+  fi
+}
 
 function git_cache {
   local git_port="$1"; shift
@@ -26,9 +53,9 @@ function git_cache {
   ssh -n -o ControlPath=$pth_control -O exit $nm_remote
 }
 
-if [[ -z "$_HF_CACHE" ]]; then
-  export _HF_CACHE=1
-  git serve "$@"
-else
-  git_cache "$@"
-fi
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
