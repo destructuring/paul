@@ -60,8 +60,9 @@ function git_cache {
 
   local timestamp="cache$(date +%s)"
 
-  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add $timestamp git://localhost:$remote_port/ && git -q fetch $timestamp && git tag $timestamp $git_head"
+  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add $timestamp git://localhost:$remote_port/ && git fetch -q $timestamp && git tag $timestamp $git_head"
   ssh -n -o ControlPath=$pth_control -O exit $nm_remote
+  echo "HEAD $git_head tagged as $timestamp"
 }
 
 # parse the command-line
