@@ -16,18 +16,28 @@ source "$shome/bin/_prime" "$@"
 # entry point
 function main {
   local nm_remote="origin"
+  local nm_branch
 
   if [[ "$#" > 1 ]]; then
     display_help
     exit 1
   fi
 
-  if [[ "$#" = 1 ]]; then
-    nm_remote="$1"; shift
-  fi
 
-  url_owner="$(git remote show origin | awk '/Fetch URL/ {print $NF}' | sed 's#https*://#git@#; s#/#:#')"
+  local url_origin="$(git remote show origin | awk '/Fetch URL/ {print $NF}')"
+  local url_owner="$url_origin"
+  if [[ "$url_origin" =~ ^https?:// ]]; then
+    url_owner="$(echo "$url_origin" | sed 's#https*://#git@#; s#/#:#')"
+  fi
+  git remote rm owner 2>&1 > /dev/null || { logger_info "ignore previous error"; true; }
   git remote add owner "$url_owner"
+
+  if [[ "$#" = 1 ]]; then
+    nm_branch="$1"; shift
+    git branch -d "$nm_branch" || { logger_info "ignore previous error"; true; }
+    git checkout -b "$nm_branch" || { logger_info "ignore previous error"; true; }
+    git push -u owner "$nm_branch"
+  fi
 }
 
 # parse the command-line
