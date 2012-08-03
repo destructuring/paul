@@ -1,3 +1,38 @@
+## 1.10.2 (2012-07-24)
+
+* fix pushing multiple refs to multiple remotes
+* support ssh.github.com
+* security: mode for ~/.config/hub is 0600
+* fix integration with GitHub Enterprise API
+* fix cloning repos that start with a period
+
+## 1.10.1 (2012-05-28)
+
+* don't choke on empty config file
+* fix `browse` when not in git repo
+
+## 1.10.0 (2012-05-08)
+
+* improve improved help text
+* fix GitHub username prompt in `create` command
+* make `fetch` command work with private repos too
+* add `merge` command to merge pull requests
+
+## 1.9.0 (2012-05-04)
+
+* internal refactoring and code reorganization
+* switch to GitHub API v3 and authenticate via OAuth
+* auth info is now stored in ~/.config/hub instead of ~/.gitconfig
+
+## 1.8.4 (2012-03-20)
+
+* add bash, zsh completion
+* improve `hub alias` command
+* change `git fork` so it fails when repo already exists under user
+* teach custom commands to respect `-h` & `--help` flags
+* `pull-request`: better error message for invalid remotes/URLs
+* respect local SSH aliases for host names
+
 ## 1.8.3 (2012-03-02)
 
 * fix `pull-request` from branch tracking another local branch
