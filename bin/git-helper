@@ -23,23 +23,23 @@ function main {
 
   case "$nm_helper" in
     sh)
-      git remote add sh https://github.com/HeSYINUvSBZfxqA/meat
+      git remote add sh https://github.com/destructuring/meat
       git fetch sh
       ;;
     ao)
-      git remote add ao https://github.com/HeSYINUvSBZfxqA/ao-helper
+      git remote add ao https://github.com/destructuring/ao-helper
       git fetch ao
       ;;
     rb)
-      git remote add rb https://github.com/HeSYINUvSBZfxqA/rb-helper
+      git remote add rb https://github.com/destructuring/rb-helper
       git fetch rb
       ;;
     doc)
-      git remote add doc https://github.com/HeSYINUvSBZfxqA/doc-helper
+      git remote add doc https://github.com/destructuring/doc-helper
       git fetch doc
       ;;
     tvd)
-      git remote add tvd https://github.com/HeSYINUvSBZfxqA/tvdinner
+      git remote add tvd https://github.com/destructuring/tvdinner
       git fetch tvd
       ;;
     *)
