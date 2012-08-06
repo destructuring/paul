@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#/ NAME
+#/     git rename -- rename a github project
+#/
+#/ SYNOPSIS
+#/     git rename old new
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/bin/_prime" "$@"
+
+# entry point
+function main {
+  if [[ "$#" < 1 ]]; then
+    logger_fatal "missing old, new repository names"
+    display_help
+    exit 1
+  fi
+
+  if [[ "$#" < 2 ]]; then
+    logger_fatal "missing new repository names"
+    display_help
+    exit 1
+  fi
+
+  local nm_old="$1"; shift
+  local nm_new="$1"; shift
+
+  local remote
+  local url
+  local action
+  git remote -v | while read -r remote url action; do
+    if [[ -n "${action}" ]]; then
+      local url_old="$url"
+      local url_new="${url_old/$nm_old/$nm_new}"
+      if [[ "$url_old" != "$url_new" ]]; then
+        echo git remote set-url "$remote" "$url_new"
+      fi
+    fi
+  done
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
