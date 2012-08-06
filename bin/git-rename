@@ -41,6 +41,12 @@ function main {
       fi
     fi
   done
+
+  local subm
+  for subm in $(git submodule | awk '{print $2}'); do
+    pushd $subm
+    git rename "$nm_old" "$nm_new"
+  done
 }
 
 # parse the command-line
