@@ -42,13 +42,20 @@ function main {
       git fetch "$remote"
     fi
   done
+  
+  local f
+  for f in .gitmodules .git/config config; do
+    if [[ -r "$f" && ! -d "$f" ]]; then
+      perl -pe "m{^\s*url\s*=} && s{$nm_old}{$nm_new}" -i "$f"
+    fi
+  done
 
   local subm
-  for subm in $(git submodule | awk '{print $2}'); do
+  for subm in $({ git submodule || true; } | awk '{print $2}'); do
     pushd $subm
     git rename "$nm_old" "$nm_new"
     if [[ ! -d ".git" ]]; then
-      local pth_repo="$(cat .git | awk '$1 == "getdir:" { print $2 }')"
+      local pth_repo="$(cat .git | awk '$1 == "gitdir:" { print $2 }')"
       pushd "$pth_repo"
         git rename "$nm_old" "$nm_new"
       popd
