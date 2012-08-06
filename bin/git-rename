@@ -38,8 +38,8 @@ function main {
       local url_new="${url_old/$nm_old/$nm_new}"
       if [[ "$url_old" != "$url_new" ]]; then
         git remote set-url "$remote" "$url_new"
-        git fetch "$remote"
       fi
+      git fetch "$remote"
     fi
   done
 
