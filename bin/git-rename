@@ -38,6 +38,7 @@ function main {
       local url_new="${url_old/$nm_old/$nm_new}"
       if [[ "$url_old" != "$url_new" ]]; then
         git remote set-url "$remote" "$url_new"
+        git fetch "$remote"
       fi
     fi
   done
@@ -46,6 +47,13 @@ function main {
   for subm in $(git submodule | awk '{print $2}'); do
     pushd $subm
     git rename "$nm_old" "$nm_new"
+    if [[ ! -d ".git" ]]; then
+      local pth_repo="$(cat .git | awk '$1 == "getdir:" { print $2 }')"
+      pushd "$pth_repo"
+        git rename "$nm_old" "$nm_new"
+      popd
+    fi
+    popd
   done
 }
 
