@@ -37,7 +37,7 @@ function main {
       local url_old="$url"
       local url_new="${url_old/$nm_old/$nm_new}"
       if [[ "$url_old" != "$url_new" ]]; then
-        echo git remote set-url "$remote" "$url_new"
+        git remote set-url "$remote" "$url_new"
       fi
     fi
   done
