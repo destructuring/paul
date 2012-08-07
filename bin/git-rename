@@ -45,8 +45,10 @@ function main {
   
   local f
   for f in .gitmodules .git/config config; do
-    if [[ -r "$f" && ! -d "$f" ]]; then
-      perl -pe "m{^\s*url\s*=} && s{$nm_old}{$nm_new}" -i "$f"
+    if [[ "$f" != ".gitmodules" || "$FLAGS_workarea" = "$FLAGS_TRUE" ]]; then
+      if [[ -r "$f" && ! -d "$f" ]]; then
+        perl -pe "m{^\s*url\s*=} && s{$nm_old}{$nm_new}" -i "$f"
+      fi
     fi
   done
 
@@ -63,6 +65,10 @@ function main {
     popd
   done
 }
+
+# define command line options:
+#   var name, default, description, short option
+DEFINE_boolean 'workarea' "$FLAGS_FALSE" 'modify workarea files?' 'w'
 
 # parse the command-line
 parse_command_line "$@" || exit $?
