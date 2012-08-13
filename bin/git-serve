@@ -7,11 +7,8 @@
 #/     git server post_command args
 #/       post_command will have the dynamic git daemon port added to arguments
 
-# figure out the project root under which bin, lib live
-shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
-
 # load a meat library
-source "$shome/bin/_prime" "$@"
+source "$shome/bin/_treadstone"
 
 # entry point
 function main {
