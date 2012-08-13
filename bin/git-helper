@@ -11,8 +11,11 @@
 #/          rb - rubygems development
 #/         tvd - microwave tvdinners
 
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
 # load a jason library
-source "$shome/bin/_treadstone"
+source "$shome/bin/_treadstone" "$@"
 
 # entry point
 function main {
