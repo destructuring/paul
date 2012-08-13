@@ -6,10 +6,7 @@ if [[ "$__jason__" != 'x' ]]; then
 fi
 __jason__='y'
 
-if [[ "$#" = 2 && "$1" = "shome" ]]; then
-  shift
-  shome="$2"; shift
-else
+if [[ -z "${shome:-}" ]]; then
   shome="$(cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"
 fi
 
