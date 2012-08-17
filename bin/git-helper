@@ -23,32 +23,32 @@ function main {
 
   case "$nm_helper" in
     sh)
-      git remote rm sh
+      git remote rm sh 2>&1 > /dev/null || true
       git remote add sh https://github.com/destructuring/jason
       git config remote.sh.tagopt --no-tags
       git fetch sh
 
       ;;
     ao)
-      git remote rm ao
+      git remote rm ao 2>&1 > /dev/null || true
       git remote add ao https://github.com/destructuring/ao-helper
       git config remote.ao.tagopt --no-tags
       git fetch ao
       ;;
     rb)
-      git remote rm rb
+      git remote rm rb 2>&1 > /dev/null || true
       git remote add rb https://github.com/destructuring/rb-helper
       git config remote.rb.tagopt --no-tags
       git fetch rb
       ;;
     doc)
-      git remote rm doc
+      git remote rm doc 2>&1 > /dev/null || true
       git remote add doc https://github.com/destructuring/doc-helper
       git config remote.doc.tagopt --no-tags
       git fetch doc
       ;;
     tvd)
-      git remote rm tvd
+      git remote rm tvd 2>&1 > /dev/null || true
       git remote add tvd https://github.com/destructuring/tvdinner
       git config remote.tvd.tagopt --no-tags
       git fetch tvd
