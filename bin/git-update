@@ -14,6 +14,7 @@ source "$shome/bin/_treadstone"
 
 # entry point
 function main {
+  git fetch --tags
   git pull "$@"
   git submodule update --init --recursive
 }
