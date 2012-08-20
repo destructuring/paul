@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#/ NAME
+#/     git hardlink -- hardlink clone and fixup remotes
+#/
+#/ SYNOPSIS
+#/     git hardlink workarea
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/bin/_treadstone"
+
+# entry point
+function main {
+  if [[ "$#" < 1 ]]; then
+    logger_fatal "missing workarea"
+    exit 1
+  fi
+
+  local workarea="$1"; shift
+
+  git clone --mirror . "$workarea/.git"
+  local pth_origin="$(git remote -v | egrep "^origin\t" | awk 'NR == 1 { print $2}')"
+
+  cd $workarea
+  git remote rename origin hardlinked
+  git remote add origin "$pth_origin"
+  git fetch origin
+  git config core.bare false
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
