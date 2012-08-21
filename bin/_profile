@@ -2,9 +2,9 @@
 
 if [[ "$#" > 0 ]]; then
   HUBFLOW="$1"; shift
+else
+  HUBFLOW="$(cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"
 fi
-
-: ${HUBFLOW:="$(cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"}
 
 PATH="$HUBFLOW/bin:$PATH"
 hash -r
