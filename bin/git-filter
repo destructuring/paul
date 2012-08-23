@@ -25,18 +25,27 @@ function main {
   fi
 
   local filter="$1"; shift
-  local stage="$1"; shift
+  if [[ "$filter" = "install" ]]; then
+    local stage="$filter"
+    filter="$1"; shift
+  else
+    local stage="$1"; shift
+  fi
 
   if [[ -x $shome/bin/filters/$filter/$stage ]]; then
     exec $shome/bin/filters/$filter/$stage "$@"
   else
     case "$stage" in
       install)
-          git config diff.$1.textconv git filter $1 textconv
-          git config diff.$1.smudge git filter $1 smudge
-          git config diff.$1.clean git filter $1 clean
+          local key="$1"; shift
 
-          echo "* filter=$1 diff=$1" > .gitattributes
+          echo "$key" > .filter-key
+
+          git config --local diff.$filter.textconv "git filter $filter textconv"
+          git config --local filter.$filter.smudge "git filter $filter smudge"
+          git config --local filter.$filter.clean "git filter $filter clean"
+
+          echo "* filter=$filter diff=$filter" > .gitattributes
         ;;
       *)
         logger_fatal "dont know filter command $stage"
