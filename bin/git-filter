@@ -37,10 +37,6 @@ function main {
   else
     case "$stage" in
       install)
-          local key="$1"; shift
-
-          echo "$key" > .filter-key
-
           git config --local diff.$filter.textconv "git filter $filter textconv"
           git config --local filter.$filter.smudge "git filter $filter smudge"
           git config --local filter.$filter.clean "git filter $filter clean"
