@@ -30,11 +30,18 @@ function main {
   if [[ -x $shome/bin/filters/$filter/$stage ]]; then
     exec $shome/bin/filters/$filter/$stage "$@"
   else
-    if [[ -d $shome/bin/filters/$stage ]]; then
-      exec $shome/bin/filters/$filter "$stage" "$@"
-    else
-      logger_fatal "cant find filter $stage"
-    fi
+    case "$stage" in
+      install)
+          git config diff.$1.textconv git filter $1 textconv
+          git config diff.$1.smudge git filter $1 smudge
+          git config diff.$1.clean git filter $1 clean
+
+          echo "* filter=$1 diff=$1" > .gitattributes
+        ;;
+      *)
+        logger_fatal "dont know filter command $stage"
+        ;;
+    esac
   fi
 }
 
