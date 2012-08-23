@@ -1,3 +1,3 @@
 #!/bin/bash
 
-openssl enc -d -base64 -aes-256-ecb -kfile .secrets/pass -in "$1" 2> /dev/null || cat "$1"
+openssl enc -d -base64 -aes-256-ecb -kfile "$(cd -P -- "./$(git rev-parse --show-cdup)" && echo "$(pwd -P)/.secrets/pass")" -in "$1" 2> /dev/null || cat "$1"

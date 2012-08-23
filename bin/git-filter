@@ -4,7 +4,7 @@
 #/     filter -- runs a git filter, as in https://gist.github.com/3430823
 #/
 #/ SYNOPSIS
-#/     filter type stage
+#/     filter type stage secrets
 
 # figure out the project root under which bin, lib live
 shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
@@ -25,23 +25,49 @@ function main {
   fi
 
   local filter="$1"; shift
-  if [[ "$filter" = "install" ]]; then
-    local stage="$filter"
-    filter="$1"; shift
-  else
-    local stage="$1"; shift
-  fi
+  case "$filter" in
+    install|clone)
+      local stage="$filter"
+      filter="$1"; shift
+      ;;
+    *)
+      local stage="$1"; shift
+      ;;
+  esac
 
   if [[ -x $shome/bin/filters/$filter/$stage ]]; then
     exec $shome/bin/filters/$filter/$stage "$@"
   else
+    local pth_origin="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
     case "$stage" in
       install)
+          if [[ "$#" < 1 ]]; then
+            logger_fatal "missing secrets location"
+            exit 1
+          fi
+
+          local secrets="$1"; shift
+          if [[ ! -r "$secrets/pass" ]]; then
+            logger_fatal "could not read any secrets in $secrets"
+            exit 1
+          fi
+
+          ln -nfs "$secrets" "$pth_origin/.secrets"
+
           git config --local diff.$filter.textconv "git filter $filter textconv"
           git config --local filter.$filter.smudge "git filter $filter smudge"
           git config --local filter.$filter.clean "git filter $filter clean"
 
-          echo "* filter=$filter diff=$filter" > .gitattributes
+          echo "* filter=$filter diff=$filter" > "$pth_origin/.gitattributes"
+          echo "$filter $secrets" > "$pth_origin/.gitfilterargs"
+        ;;
+      clone)
+        local pth_clone="$filter"
+        git clone -n "$pth_origin" "$pth_clone"
+        pushd "$pth_clone" > /dev/null
+        git filter install $(cat "$pth_origin/.gitfilterargs")
+        git reset --hard HEAD
+        popd > /dev/null
         ;;
       *)
         logger_fatal "dont know filter command $stage"

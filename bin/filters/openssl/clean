@@ -1,3 +1,4 @@
 #!/bin/bash
 
-exec openssl enc -base64 -aes-256-ecb -S $(cat .secrets/salt) -kfile .secrets/pass
+pth_origin="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
+exec openssl enc -base64 -aes-256-ecb -S "$(cat $pth_origin/.secrets/salt)" -kfile "$pth_origin/.secrets/pass"
