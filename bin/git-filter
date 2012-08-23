@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#/ NAME
+#/     filter -- runs a git filter, as in https://gist.github.com/3430823
+#/
+#/ SYNOPSIS
+#/     filter type stage
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/bin/_treadstone"
+
+# entry point
+function main {
+  if [[ "$#" < 1 ]]; then
+    logger_fatal "missing filter"
+    exit 1
+  fi
+
+  if [[ "$#" < 2 ]]; then
+    logger_fatal "missing stage"
+    exit 1
+  fi
+
+  local filter="$1"; shift
+  local stage="$1"; shift
+
+  if [[ -x $shome/bin/filters/$filter/$stage ]]; then
+    exec $shome/bin/filters/$filter/$stage "$@"
+  else
+    if [[ -d $shome/bin/filters/$stage ]]; then
+      exec $shome/bin/filters/$filter "$stage" "$@"
+    else
+      logger_fatal "cant find filter $stage"
+    fi
+  fi
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
