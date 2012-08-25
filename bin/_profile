@@ -3,8 +3,10 @@
 if [[ "$#" > 0 ]]; then
   HUBFLOW="$1"; shift
 else
-  HUBFLOW="$(cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"
+  : ${HUBFLOW:="$(cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"}
 fi
+
+export HUBFLOW
 
 PATH="$HUBFLOW/bin:$PATH"
 hash -r
