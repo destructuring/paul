@@ -6,5 +6,6 @@ gem 'cucumber'
 gem 'sinatra'
 gem 'thin'
 gem 'json'
+gem 'gaga'
 
 gemspec
