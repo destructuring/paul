@@ -1,5 +1,0 @@
-#!/bin/bash -e
-
-pth_origin="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
-[[ -d "$pth_origin/.secrets/." ]] || exit 1
-openssl enc -d -base64 -aes-256-ecb -kfile "$pth_origin/.secrets/pass" 2> /dev/null || cat

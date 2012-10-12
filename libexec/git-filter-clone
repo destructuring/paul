@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#/ NAME
+#/     filter -- runs a git filter, as in https://gist.github.com/3430823
+#/
+#/ SYNOPSIS
+#/     filter type stage secrets
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/bin/_treadstone"
+
+# entry point
+function main {
+  if [[ "$#" < 1 ]]; then
+    logger_fatal "missing filter"
+    exit 1
+  fi
+
+  local filter="$1"; shift
+
+  local pth_clone="$filter"
+  git clone -n "$pth_origin" "$pth_clone"
+  pushd "$pth_clone" > /dev/null
+  git filter install $(cat "$pth_origin/.gitfilterargs")
+  git reset --hard HEAD
+  popd > /dev/null
+}
+
+require sub "$BASH_SOURCE" "$@"
