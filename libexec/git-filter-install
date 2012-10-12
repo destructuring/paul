@@ -14,32 +14,40 @@ source "$shome/bin/_treadstone"
 
 # entry point
 function main {
+  local pth_origin="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
+
   if [[ "$#" < 1 ]]; then
     logger_fatal "missing filter"
     exit 1
   fi
 
-  local filter="$1"; shift
-
-  if [[ "$#" < 1 ]]; then
+  if [[ "$#" < 2 ]]; then
     logger_fatal "missing secrets location"
     exit 1
   fi
 
+  local filter="$1"; shift
   local secrets="$1"; shift
+
   if [[ ! -r "$secrets/pass" ]]; then
     logger_fatal "could not read any secrets in $secrets"
     exit 1
+  fi
+
+  if [[ -r "$secrets/salt" ]]; then
+    for a in {1..8}; do printf '%x' $(($RANDOM % 16)); done > "$secrets/salt"
   fi
 
   ln -nfs "$secrets" "$pth_origin/.secrets"
 
   git config --local diff.$filter.textconv "git filter $filter textconv"
   git config --local filter.$filter.smudge "git filter $filter smudge"
-  git config --local filter.$filter.clean "git filter $filter clean"
+  git config --local filter.$filter.clean  "git filter $filter clean"
 
   echo "* filter=$filter diff=$filter" > "$pth_origin/.gitattributes"
   echo "$filter $secrets" > "$pth_origin/.gitfilterargs"
 }
 
 require sub "$BASH_SOURCE" "$@"
+
+

@@ -21,7 +21,7 @@ function main {
     exit 1
   fi
 
-  exec openssl enc -d -base64 -aes-256-ecb -kfile "$pth_origin/.secrets/pass" 2> /dev/null || cat
+  openssl enc -d -base64 -aes-256-ecb -kfile "$pth_origin/.secrets/pass" 2> /dev/null || cat
 }
 
 require sub "$BASH_SOURCE" "$@"
