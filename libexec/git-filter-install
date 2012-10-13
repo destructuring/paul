@@ -52,11 +52,9 @@ function main {
   git config --local filter.$filter.required true
 
   echo "* filter=$filter diff=$filter" > "$pth_origin/.gitattributes"
-  echo "$filter $secrets" > "$pth_origin/.gitfilterargs"
 
     cat >> "$pth_origin/.gitignore" << EOF
 /.gitattributes
-/.gitfilterargs
 /.secrets
 EOF
 
