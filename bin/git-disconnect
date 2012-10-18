@@ -32,7 +32,7 @@ function main {
   git rm -rf .
   touch .gitignore
   git add .gitignore
-  git commit -m 'initializing disconnected branch $nm_branch'
+  git commit -m "initializing disconnected branch $nm_branch"
   git clean -fdx
 
   if [[ -n "$nm_from" ]]; then
