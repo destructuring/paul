@@ -5,5 +5,5 @@
 
 $: << File.expand_path('../../lib', __FILE__)
 require 'hub'
-ENV['PATH'] = "#{File.expand_path('../../gitflow', __FILE__)}:#{ENV['PATH']}"
+ENV['PATH'] = "#{File.expand_path('../../.gitflow/bin', __FILE__)}:#{ENV['PATH']}"
 Hub::Runner.execute(*ARGV)
