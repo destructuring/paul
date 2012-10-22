@@ -14,7 +14,7 @@ source "$shome/bin/_treadstone"
 
 # entry point
 function main {
-  true
+  hub "$@"
 }
 
 require sub "$BASH_SOURCE" "$@"
