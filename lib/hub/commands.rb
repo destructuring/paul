@@ -638,24 +638,6 @@ module Hub
       end
     end
 
-    # $ hub hub standalone
-    # Prints the "standalone" version of hub for an easy, memorable
-    # installation sequence:
-    #
-    # $ gem install hub
-    # $ hub hub standalone > ~/bin/hub && chmod 755 ~/bin/hub
-    # $ gem uninstall hub
-    def hub(args)
-      return help(args) unless args[1] == 'standalone'
-      require 'hub/standalone'
-      Hub::Standalone.build $stdout
-      exit
-    rescue LoadError
-      abort "hub is already running in standalone mode."
-    rescue Errno::EPIPE
-      exit # ignore broken pipe
-    end
-
     def alias(args)
       shells = %w[bash zsh sh ksh csh fish]
 
