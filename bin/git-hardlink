@@ -19,16 +19,24 @@ function main {
     exit 1
   fi
 
+  if [[ "$#" < 2 ]]; then
+    logger_fatal "missing branch"
+    exit 1
+  fi
+
   local workarea="$1"; shift
+  local nm_branch="$1"; shift
 
   git clone --mirror . "$workarea/.git"
   local pth_origin="$(git remote -v | egrep "^origin\t" | awk 'NR == 1 { print $2}')"
 
   cd $workarea
+  git remote add origin2 "$pth_origin"
+  git fetch origin2
   git remote rename origin hardlinked
-  git remote add origin "$pth_origin"
-  git fetch origin
+  git remote rename origin2 origin
   git config core.bare false
+  git checkout -t -b $nm_branch origin/$nm_branch
 }
 
 # parse the command-line
