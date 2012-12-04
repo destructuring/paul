@@ -1,0 +1,5 @@
+---
+remotes:
+  vendor: https://github.com/defunkt/hub
+  origin: https://github.com/destructuring/paul
+  owner : git@github.com/destructuring/paul

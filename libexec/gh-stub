@@ -14,7 +14,7 @@ source "$shome/bin/_treadstone"
 
 # entry point
 function main {
-  $shome/bin/gh "$@"
+  $shome/libexec/gh "$@"
 }
 
 require 'sub' "$BASH_SOURCE" "$@"
