@@ -9,12 +9,12 @@ module Hub
   # 1. hub is invoked from the command line:
   #    $ hub clone rtomayko/tilt
   #
-  # 2. The Hub class is initialized:
-  #    >> hub = Hub.new('clone', 'rtomayko/tilt')
+  # 2. The Runner class is initialized:
+  #    >> Hub::Runner.new('clone', 'rtomayko/tilt')
   #
   # 3. The method representing the git subcommand is executed with the
   #    full args:
-  #    >> Commands.clone('clone', 'rtomayko/tilt')
+  #    >> Hub::Commands.clone(['clone', 'rtomayko/tilt'])
   #
   # 4. That method rewrites the args as it sees fit:
   #    >> args[1] = "git://github.com/" + args[1] + ".git"
@@ -465,9 +465,14 @@ module Hub
       end
       forked_project = project.owned_by(github_user(project.host))
 
-      if api_client.repo_exists?(forked_project)
-        abort "Error creating fork: %s already exists on %s" %
-          [ forked_project.name_with_owner, forked_project.host ]
+      existing_repo = api_client.repo_info(forked_project)
+      if existing_repo.success?
+        parent_data = existing_repo.data['parent']
+        parent_url  = parent_data && resolve_github_url(parent_data['html_url'])
+        if !parent_url or parent_url.project != project
+          abort "Error creating fork: %s already exists on %s" %
+            [ forked_project.name_with_owner, forked_project.host ]
+        end
       else
         api_client.fork_repo(project) unless args.noop?
       end
@@ -975,7 +980,7 @@ help
         end
       end
     end
-
+    
     def display_api_exception(action, response)
       $stderr.puts "Error #{action}: #{response.message.strip} (HTTP #{response.status})"
       if 422 == response.status and response.error_message?
