@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#/ NAME
+#/     git setup -- sets up a git repo from configuration
+#/
+#/ SYNOPSIS
+#/     git setup
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/libexec/_treadstone"
+
+# entry point
+function main {
+  if [[ ! -f "$shome/.gitsetup.yml" ]]; then
+    log_fatal "missing .gitsetup.yml"
+    exit 1
+  fi
+
+  setup_remotes
+}
+
+function setup_remotes {
+  local nm_remote
+  for nm_remote in $(ryaml $shome/.gitsetup.yml remotes | grep : | cut -d: -f1); do
+    local url=$(ryaml $shome/.gitsetup.yml remotes $nm_remote)
+    git remote add $nm_remote $url || git remote show $nm_remote
+    echo
+  done
+}
+
+require sub "$BASH_SOURCE" "$@"
