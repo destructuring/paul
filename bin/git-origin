@@ -23,7 +23,7 @@ function main {
     local nm_branch="$1"; shift
     git branch -d "$nm_branch" || { logger_info "ignore previous error"; true; }
     git checkout -b "$nm_branch" || { logger_info "ignore previous error"; true; }
-    git push -u owner "$nm_branch"
+    git push -u origin "$nm_branch"
   fi
 }
 
