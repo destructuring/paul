@@ -1,6 +1,6 @@
 ---
 remotes:
   vendor: https://github.com/defunkt/hub
-  owner : git@github.com:destructuring/paul
-  primary: https://github.com/destructuring/paul
+  primary: git@github.com:destructuring/paul
   secondary: git@destructuring.org:destructuring/paul
+  sh: https://github.com/destructuring/jason

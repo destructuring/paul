@@ -26,6 +26,16 @@ function setup_remotes {
   local nm_remote
   for nm_remote in $(ryaml $shome/.gitsetup.yml remotes | grep : | cut -d: -f1); do
     local url=$(ryaml $shome/.gitsetup.yml remotes $nm_remote)
+    local url_local="$(git remote show $nm_remote 2>&- | grep 'Fetch URL:' | cut -d: -f2- | awk '{print $1}')"
+
+    if [[ -z "$url_local" ]]; then
+      true
+    elif [[ "$url_local" != "$url" ]]; then
+      git remote remove $nm_remote
+    else
+      continue
+    fi
+
     git remote add $nm_remote $url || git remote show $nm_remote
     echo
   done
