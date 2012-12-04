@@ -8,6 +8,7 @@
 
 # figure out the project root under which bin, lib live
 shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+ghome="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
 
 # load a meat library
 source "$shome/libexec/_treadstone"
@@ -16,8 +17,10 @@ source "$shome/libexec/_treadstone"
 function main {
   local nm_remote="$1"; shift
 
+  cd $ghome
+
   git remote rm origin 2>&1 > /dev/null || true
-  git remote add origin "$(ryaml $shome/.gitsetup.yml remotes $nm_remote)"
+  git remote add origin "$(ryaml $ghome/.gitsetup.yml remotes $nm_remote)"
 
   if [[ "$#" = 1 ]]; then
     local nm_branch="$1"; shift

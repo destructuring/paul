@@ -8,13 +8,16 @@
 
 # figure out the project root under which bin, lib live
 shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+ghome="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
 
 # load a meat library
 source "$shome/libexec/_treadstone"
 
 # entry point
 function main {
-  if [[ ! -f "$shome/.gitsetup.yml" ]]; then
+  cd $ghome
+
+  if [[ ! -f "$ghome/.gitsetup.yml" ]]; then
     log_fatal "missing .gitsetup.yml"
     exit 1
   fi
@@ -24,8 +27,8 @@ function main {
 
 function setup_remotes {
   local nm_remote
-  for nm_remote in $(ryaml $shome/.gitsetup.yml remotes | grep : | cut -d: -f1); do
-    local url=$(ryaml $shome/.gitsetup.yml remotes $nm_remote)
+  for nm_remote in $(ryaml $ghome/.gitsetup.yml remotes | grep : | cut -d: -f1); do
+    local url=$(ryaml $ghome/.gitsetup.yml remotes $nm_remote)
     local url_local="$(git remote show $nm_remote 2>&- | grep 'Fetch URL:' | cut -d: -f2- | awk '{print $1}')"
 
     if [[ -z "$url_local" ]]; then
