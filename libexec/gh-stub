@@ -10,7 +10,7 @@
 shome="$(cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
 
 # load a jason bourne library
-source "$shome/libexec_jason"
+source "$shome/libexec/_jason"
 
 # entry point
 function main {

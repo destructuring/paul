@@ -11,7 +11,7 @@ shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
 ghome="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
 
 # load a meat library
-source "$shome/libexec_jason"
+source "$shome/libexec/_jason"
 
 # entry point
 function main {
