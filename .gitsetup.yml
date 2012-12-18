@@ -4,3 +4,4 @@ remotes:
   primary: git@github.com:destructuring/paul
   secondary: git@destructuring.org:destructuring/paul
   sh: https://github.com/destructuring/jason
+  bump: https://github.com/destructuring/mixin-bump
