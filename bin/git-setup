@@ -43,3 +43,5 @@ function setup_remotes {
     echo
   done
 }
+
+main "$@"

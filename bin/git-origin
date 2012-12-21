@@ -29,3 +29,5 @@ function main {
     git push -u origin "$nm_branch"
   fi
 }
+
+main "$@"
