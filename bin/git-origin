@@ -29,5 +29,3 @@ function main {
     git push -u origin "$nm_branch"
   fi
 }
-
-require sub "$BASH_SOURCE" "$@"

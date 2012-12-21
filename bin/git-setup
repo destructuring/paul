@@ -43,5 +43,3 @@ function setup_remotes {
     echo
   done
 }
-
-require sub "$BASH_SOURCE" "$@"
