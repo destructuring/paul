@@ -2,6 +2,6 @@
 remotes:
   vendor: https://github.com/defunkt/hub
   primary: git@github.com:destructuring/paul
-  secondary: git@destructuring.org:destructuring/paul
+  secondary: git@bitbucket.org:destructuring/paul
   sh: https://github.com/destructuring/jason
   bump: https://github.com/destructuring/mixin-bump
