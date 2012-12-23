@@ -19,7 +19,7 @@ DEFINE_boolean "tags" "$FLAGS_FALSE" "push all tags?" "t"
 
 # entry point
 function main {
-  local nm_branch="$(gut status -sb | awk '$1 == "##" { print $2 }')"
+  local nm_branch="$(gut status -sb | awk '$1 == "##" { print $2 }' | cut -d. -f1)"
 
   if [[ "$FLAGS_all" = "$FLAGS_TRUE" ]]; then
     gut push --all primary
@@ -41,7 +41,7 @@ function main {
     gut push --tags secondary
   fi
 
-  git fetch origin
+  gut fetch origin
 }
 
 # parse the command-line
