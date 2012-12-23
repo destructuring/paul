@@ -18,7 +18,7 @@ function main {
   cd $ghome
 
   if [[ ! -f "$ghome/.gitsetup.yml" ]]; then
-    log_fatal "missing .gitsetup.yml"
+    logger_fatal "missing .gitsetup.yml"
     exit 1
   fi
 
