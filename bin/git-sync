@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#/ NAME
+#/     gut sync -- synchronize current branch with primary, secondary remotes
+#/
+#/ SYNOPSIS
+#/     gut sync
+#/     gut sync --all --tags
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/libexec/_jason"
+require paul
+
+DEFINE_boolean "all" "$FLAGS_FALSE" "push all objects?" "a"
+DEFINE_boolean "tags" "$FLAGS_FALSE" "push all tags?" "t"
+
+# entry point
+function main {
+  local nm_branch="$(gut status -sb | awk '$1 == "##" { print $2 }')"
+
+  if [[ "$FLAGS_all" = "$FLAGS_TRUE" ]]; then
+    gut push --all primary
+    gut push --all secondary
+  else
+    if [[ "$#" > 0 ]]; then
+      for br in "$@"; do
+        gut push primary $br
+        gut push secondary $br
+      done
+    else
+      gut push primary $nm_branch
+      gut push secondary $nm_branch
+    fi
+  fi
+
+  if [[ "$FLAGS_tags" = "$FLAGS_TRUE" ]]; then
+    gut push --tags primary
+    gut push --tags secondary
+  fi
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
