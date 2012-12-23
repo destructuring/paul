@@ -22,7 +22,7 @@ function main {
   cd $ghome
 
   if [[ "$FLAGS_init" = "$FLAGS_TRUE" ]]; then
-    if git remote show origin 2>&- > /dev/null; then
+    if !git remote show origin 2>&- > /dev/null; then
       git remote add origin "$(ryaml $ghome/.gitsetup.yml remotes $nm_remote)"
     fi
   else
