@@ -45,10 +45,8 @@ function setup_remotes {
     fi
 
     if [[ -z "$nm_local" ]]; then
-      if [[ -n "$url_local" ]]; then
-        gut remote remove $nm_remote
-      fi
       gut remote add $nm_remote $url
+      gut fetch $nm_remote
     else
       if [[ "$url_local" != "$url" ]]; then
         gut remote remove $nm_remote
