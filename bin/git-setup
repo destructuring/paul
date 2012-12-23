@@ -65,6 +65,8 @@ function setup_remotes {
         ;;
     esac
   done
+
+  gut origin --init primary
 }
 
 main "$@"
