@@ -40,6 +40,8 @@ function main {
     gut push --tags primary
     gut push --tags secondary
   fi
+
+  git fetch origin
 }
 
 # parse the command-line
