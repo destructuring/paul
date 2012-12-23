@@ -38,7 +38,6 @@ function setup_remotes {
 
     if [[ -z "$nm_local" ]]; then
       gut remote add $nm_remote $url
-      gut fetch $nm_remote
     else
       if [[ "$url_local" != "$url" ]]; then
         gut remote remove $nm_remote
@@ -54,6 +53,10 @@ function setup_remotes {
         gut config remote.$nm_remote.tagopt --no-tags
         ;;
     esac
+
+    if [[ -z "$nm_local" ]]; then
+      gut fetch $nm_remote
+    fi
   done
 
   gut origin --init primary
