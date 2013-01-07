@@ -1,8 +1,8 @@
-function gut {
+function git {
   echo "> git" "$@" 1>&2
-  if $(type -P git) "$@"; then
-    return 0
-  else
-    return $?
-  fi
+  $(type -P git) "$@"
+}
+
+function gut {
+  git "$@"
 }

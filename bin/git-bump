@@ -14,14 +14,14 @@ shome="$(cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
 
 # load a jason bourne library
 source "$shome/libexec/_jason"
+require paul
+require bump
 
 # parse the command-line
 DEFINE_boolean 'dirty' "$FLAGS_FALSE" 'force bumping in unclean work area' 'f'
 
 # entry point
 function main {
-  require 'bump'
-
   if [[ "$#" = 0 ]]; then
     set -- patch
   fi
