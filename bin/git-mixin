@@ -36,9 +36,17 @@ function main {
     git fetch "$nm_remote"
   fi
 
+  local fnms_fix=""
+  local a
+  for a in HEAD VERSION .gitsetup.yml README.md LICENSE; do
+    if [[ -f "$a" ]]; then
+      fnms_fix="$fnms_fix $a"
+    fi
+  done
+
   local ver_remote="$(git ls-remote $nm_remote $ver_wanted | awk '{print $1}')"
-  git merge --squash $ver_remote
-  git fix HEAD VERSION .gitsetup.yml README.md LICENSE
+  git merge --squash $ver_remote || true
+  git fix HEAD $fnms_fix
 }
 
 require sub "$BASH_SOURCE" "$@"
