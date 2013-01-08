@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#/ NAME
+#/     git mixin -- merge squashes a remote
+#/
+#/ SYNOPSIS
+#/     git mixin [remote] [version]
+#/     git mixin [remote]
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
+
+# load a jason bourne library
+source "$shome/libexec/_jason"
+require paul
+require bump
+
+# parse the command-line
+DEFINE_boolean update "$FLAGS_FALSE" "update remote"
+
+# entry point
+function main {
+  if [[ "$#" < 1 ]]; then
+    logger_fatal "missing remote"
+    exit 1
+  fi
+
+  local nm_remote="$1"; shift
+
+  local ver_wanted="HEAD"
+  if [[ "$#" > 0 ]]; then
+    ver_wanted="$1"; shift
+  fi
+
+  if [[ "$FLAGS_update" = "$FLAGS_TRUE" ]]; then
+    git fetch "$nm_remote"
+  fi
+
+  local ver_remote="$(git ls-remote $nm_remote $ver_wanted)"
+  git merge --squash $ver_remote
+  git fix HEAD VERSION .gitsetup.yml README.md LICENSE
+}
+
+require sub "$BASH_SOURCE" "$@"
