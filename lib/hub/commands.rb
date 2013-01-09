@@ -434,7 +434,8 @@ module Hub
         url = url.sub(%r{(/pull/\d+)/\w*$}, '\1') unless gist
         ext = gist ? '.txt' : '.patch'
         url += ext unless File.extname(url) == ext
-        patch_file = File.join(ENV['TMPDIR'] || '/tmp', "#{gist ? 'gist-' : ''}#{File.basename(url)}")
+        patch_file = File.join(tmp_dir, "#{gist ? 'gist-' : ''}#{File.basename(url)}")
+        # TODO: remove dependency on curl
         args.before 'curl', ['-#LA', "hub #{Hub::Version}", url, '-o', patch_file]
         args[idx] = patch_file
       end
@@ -525,7 +526,10 @@ module Hub
           action = "set remote origin"
         else
           action = "created repository"
-          api_client.create_repo(new_project, options) unless args.noop?
+          unless args.noop?
+            repo_data = api_client.create_repo(new_project, options)
+            new_project = github_project(repo_data['full_name'])
+          end
         end
 
         url = new_project.git_url(:private => true, :https => https_protocol?)
@@ -936,6 +940,8 @@ help
         read.close
         write.close
       end
+    rescue NotImplementedError
+      # fork might not available, such as in JRuby
     end
 
     def pullrequest_editmsg(changes)

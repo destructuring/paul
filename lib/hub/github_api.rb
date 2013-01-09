@@ -66,7 +66,7 @@ module Hub
 
     # Public: Create a new project.
     def create_repo project, options = {}
-      is_org = project.owner != config.username(api_host(project.host))
+      is_org = project.owner.downcase != config.username(api_host(project.host)).downcase
       params = { :name => project.name, :private => !!options[:private] }
       params[:description] = options[:description] if options[:description]
       params[:homepage]    = options[:homepage]    if options[:homepage]
@@ -77,6 +77,7 @@ module Hub
         res = post "https://%s/user/repos" % api_host(project.host), params
       end
       res.error! unless res.success?
+      res.data
     end
 
     # Public: Fetch info about a pull request.
@@ -114,6 +115,7 @@ module Hub
     # Requires access to a `config` object that implements:
     # - proxy_uri(with_ssl)
     # - username(host)
+    # - update_username(host, old_username, new_username)
     # - password(host, user)
     module HttpMethods
       # Decorator for Net::HTTPResponse
@@ -128,7 +130,12 @@ module Hub
           data['errors'].map do |err|
             case err['code']
             when 'custom'        then err['message']
-            when 'missing_field' then "field '%s' is missing" % err['field']
+            when 'missing_field'
+              %(Missing field: "%s") % err['field']
+            when 'invalid'
+              %(Invalid value for "%s": "%s") % [ err['field'], err['value'] ]
+            when 'unauthorized'
+              %(Not allowed to change field "%s") % err['field']
             end
           end.compact if data['errors']
         end
@@ -172,11 +179,14 @@ module Hub
 
         apply_authentication(req, url)
         yield req if block_given?
-        res = http.start { http.request(req) }
-        res.extend ResponseMethods
-        res
-      rescue SocketError => err
-        raise Context::FatalError, "error with #{type.to_s.upcase} #{url} (#{err.message})"
+
+        begin
+          res = http.start { http.request(req) }
+          res.extend ResponseMethods
+          return res
+        rescue SocketError => err
+          raise Context::FatalError, "error with #{type.to_s.upcase} #{url} (#{err.message})"
+        end
       end
 
       def request_uri url
@@ -230,10 +240,18 @@ module Hub
         if (req.path =~ /\/authorizations$/)
           super
         else
+          refresh = false
           user = url.user || config.username(url.host)
           token = config.oauth_token(url.host, user) {
+            refresh = true
             obtain_oauth_token url.host, user
           }
+          if refresh
+            # get current user info user to persist correctly capitalized login name
+            res = get "https://#{url.host}/user"
+            res.error! unless res.success?
+            config.update_username(url.host, user, res.data['login'])
+          end
           req['Authorization'] = "token #{token}"
         end
       end
@@ -335,6 +353,12 @@ module Hub
         end
       end
 
+      def update_username host, old_username, new_username
+        entry = @data.entry_for_user(normalize_host(host), old_username)
+        entry['user'] = new_username
+        @data.save
+      end
+
       def api_token host, user
         host = normalize_host host
         @data.fetch_value host, user, :api_token do
@@ -372,9 +396,11 @@ module Hub
         end
       end
 
-      # FIXME: probably not cross-platform
+      NULL = defined?(File::NULL) ? File::NULL :
+               File.exist?('/dev/null') ? '/dev/null' : 'NUL'
+
       def askpass
-        tty_state = `stty -g`
+        tty_state = `stty -g 2>#{NULL}`
         system 'stty raw -echo -icanon isig' if $?.success?
         pass = ''
         while char = $stdin.getbyte and !(char == 13 or char == 10)
