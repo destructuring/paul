@@ -16,6 +16,6 @@ function git {
     "$HUBFLOW/bin/hub" "$@"
   else
     hash -r
-    command git "$@"
+    $(type -P git) "$@"
   fi
 }
