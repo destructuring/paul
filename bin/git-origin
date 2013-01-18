@@ -37,7 +37,7 @@ function main {
     git checkout -b "$nm_branch" || { logger_info "ignore previous error"; true; }
   fi
 
-  git push -u origin "$(git status -sb | awk '$1 == "##" { print $2 }')"
+  git push -u origin "$(git status -sb | awk '$1 == "##" { print $2 }' | perl -pe 's{\.\.\..*}{}')"
 }
 
 # parse the command-line
