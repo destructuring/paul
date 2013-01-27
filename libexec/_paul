@@ -1,8 +1,24 @@
-function git {
+if [[ "$#" > 0 ]]; then
+  HUBFLOW="$1"; shift
+else
+  : ${HUBFLOW:="$(cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"}
+fi
+
+export HUBFLOW
+
+PATH="$HUBFLOW/bin:$PATH"
+hash -r
+
+function gut {
   echo "> git" "$@" 1>&2
   $(type -P git) "$@"
 }
 
-function gut {
-  git "$@"
+function git {
+  if [[ -x "$HUBFLOW/bin/hub" ]]; then
+    "$HUBFLOW/bin/hub" "$@"
+  else
+    hash -r
+    $(type -P git) "$@"
+  fi
 }
