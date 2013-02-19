@@ -1,0 +1,43 @@
+#!/bin/bash
+
+#/ NAME
+#/     git gist -- clone a gist using filename search
+#/
+#/ SYNOPSIS
+#/     git gist username
+#/     git gist username egrep-regex
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/libexec/_jason"
+require paul
+
+# entry point
+function main {
+  local nm_github="$1"; shift
+
+  local search="^"
+  if [[ "$#" > 0 ]]; then
+    search="$1"; shift
+  fi
+
+  # replace with gist api
+  local tmp_gists="$(mktemp -t XXXXXXXXX)"
+  curl -s "https://gist.github.com/$nm_github" | grep 'css-truncate-target' | grep "/${nm_github}/" | cut -d'"' -f2,5 | cut -d/ -f3- | perl -pe 's{">}{ }; s{</.*}{}; s{^}{git\@gist.github.com:}' | egrep "$search" > "$tmp_gists"
+  local cnt_gist="$(cat "$tmp_gists" | wc -l | awk '{print $1}')"
+  if [[ "$cnt_gist" > 1 ]]; then
+    cat "$tmp_gists"
+  elif [[ "$cnt_gist" = 0 ]]; then
+    logger_warning "no gists found for $search"
+    exit 1
+  else
+    gut clone $(awk '{print $1, $2}' "$tmp_gists")
+  fi
+
+  rm -f "$tmp_gists"
+}
+
+# pass arguments to entry point
+main "$@"
