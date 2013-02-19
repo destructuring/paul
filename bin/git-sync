@@ -23,22 +23,22 @@ function main {
 
   if [[ "$FLAGS_all" = "$FLAGS_TRUE" ]]; then
     gut push --all primary
-    gut push --all secondary
+    gut push --all secondary || true
   else
     if [[ "$#" > 0 ]]; then
       for br in "$@"; do
         gut push primary $br
-        gut push secondary $br
+        gut push secondary $br || true
       done
     else
       gut push primary $nm_branch
-      gut push secondary $nm_branch
+      gut push secondary $nm_branch || true
     fi
   fi
 
   if [[ "$FLAGS_tags" = "$FLAGS_TRUE" ]]; then
     gut push --tags primary
-    gut push --tags secondary
+    gut push --tags secondary || true
   fi
 
   gut fetch origin
