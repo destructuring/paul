@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#/ NAME
+#/     git clean -- garbage collect repo
+#/
+#/ SYNOPSIS
+#/     git clean
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/libexec/_jason"
+require paul
+
+# entry point
+function main {
+  rm -rf .git/refs/original/
+  git remote prune origin
+  git reflog expire --expire=now --all
+  git gc --prune=now
+  git gc --aggressive --prune=now
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"

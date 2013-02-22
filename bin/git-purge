@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#/ NAME
+#/     git purge -- remove a file from git history
+#/
+#/ SYNOPSIS
+#/     git purge [file...]
+
+# figure out the project root under which bin, lib live
+shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/libexec/_jason"
+require paul
+
+# entry point
+function main {
+  if [[ "$#" = 0 ]]; then
+    exit 0
+  fi
+
+  git filter-branch --force --index-filter "git rm --cached --ignore-unmatch $*" --prune-empty --tag-name-filter cat -- --all
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
