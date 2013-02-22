@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #/ NAME
-#/     git clean -- garbage collect repo
+#/     git gc -- garbage collect repo
 #/
 #/ SYNOPSIS
-#/     git clean
+#/     git gc
 
 # figure out the project root under which bin, lib live
 shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
@@ -16,10 +16,10 @@ require paul
 # entry point
 function main {
   rm -rf .git/refs/original/
-  git remote prune origin
-  git reflog expire --expire=now --all
-  git gc --prune=now
-  git gc --aggressive --prune=now
+  gut remote prune origin
+  gut reflog expire --expire=now --all
+  gut gc --prune=now
+  gut gc --aggressive --prune=now
 }
 
 # parse the command-line
