@@ -7,7 +7,7 @@
 #/     filter type stage secrets
 
 # figure out the project root under which bin, lib live
-shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+shome="$(unset CDPATH; cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
 
 # load a meat library
 source "$shome/libexec/_jason"
@@ -16,7 +16,7 @@ source "$shome/libexec/_jason"
 function main {
   local pth_file="$1"; shift
 
-  local pth_origin="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
+  local pth_origin="$(unset CDPATH; cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
   if [[ ! -d "$pth_origin/.secrets/." ]]; then
     logger_fatal "could not find secrets in $pth_origin/.secrets"
     exit 1

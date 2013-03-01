@@ -7,7 +7,7 @@
 #/     git owner remote
 
 # figure out the project root under which bin, lib live
-shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+shome="$(unset CDPATH; cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
 
 # load a meat library
 source "$shome/libexec/_jason"
@@ -19,7 +19,7 @@ DEFINE_boolean "init" "$FLAGS_FALSE" "Initial origin if it doesn't exist" 'i'
 function main {
   local nm_remote="$1"; shift
 
-  local ghome="$(cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
+  local ghome="$(unset CDPATH; cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
   cd $ghome
 
   if [[ "$FLAGS_init" = "$FLAGS_TRUE" ]]; then

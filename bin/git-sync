@@ -8,7 +8,7 @@
 #/     gut sync --all --tags
 
 # figure out the project root under which bin, lib live
-shome="$(cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+shome="$(unset CDPATH; cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
 
 # load a meat library
 source "$shome/libexec/_jason"
