@@ -59,7 +59,7 @@ function setup_remotes {
     fi
   done
 
-  gut origin --init primary
+  gut origin primary
 }
 
 main "$@"
