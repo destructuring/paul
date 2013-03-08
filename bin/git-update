@@ -4,7 +4,8 @@
 #/     git update -- do everything to fetch the latest, recursively
 #/
 #/ SYNOPSIS
-#/     git update [args to git pull]
+#/     git update
+#/     git update [args to bundle update]
 
 # figure out the project root under which bin, lib live
 shome="$(unset CDPATH; cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
@@ -15,14 +16,17 @@ require paul
 
 # entry point
 function main {
-  git fetch --tags
-  git pull "$@"
-  git submodule update --init --recursive
+  if [[ "$#" = - ]]; then
+    git fetch --tags
+    git pull
+    git submodule update --init --recursive
+  else
+    bundle update "$@"
+    cd $shome
+    git add -u Gemfile Gemfile.lock
+    git add -u vendor/cache
+    git add vendor/cache
+  fi
 }
 
-# parse the command-line
-parse_command_line "$@" || exit $?
-eval set -- "${FLAGS_ARGV}"
-
-# pass arguments to entry point
-main "$@"
+require sub "$BASH_SOURCE" "$@"
