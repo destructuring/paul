@@ -16,7 +16,7 @@ require paul
 
 # entry point
 function main {
-  if [[ "$#" = - ]]; then
+  if [[ "$#" = 0 ]]; then
     git fetch --tags
     git pull
     git submodule update --init --recursive
