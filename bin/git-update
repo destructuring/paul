@@ -17,15 +17,15 @@ require paul
 # entry point
 function main {
   if [[ "$#" = 0 ]]; then
-    git fetch --tags
-    git pull
-    git submodule update --init --recursive
+    gut fetch --tags
+    gut pull
+    gut submodule update --init --recursive
   else
     bundle update "$@"
     cd $shome
-    git add -u Gemfile Gemfile.lock
-    git add -u vendor/cache
-    git add vendor/cache
+    gut add -u Gemfile Gemfile.lock
+    gut add -u vendor/cache
+    gut add vendor/cache
   fi
 }
 
