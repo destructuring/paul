@@ -22,7 +22,7 @@ function main {
     gut submodule update --init --recursive
   else
     bundle update "$@"
-    cd $shome
+    cd $ghome
     gut add -u Gemfile Gemfile.lock
     gut add -u vendor/cache
     gut add vendor/cache
