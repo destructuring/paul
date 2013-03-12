@@ -26,7 +26,6 @@ function main {
     set -- patch
   fi
 
-  local ghome="$(unset CDPATH; cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
   cd $ghome
   bump_version "$FLAGS_dirty" "$@"
 }

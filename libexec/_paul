@@ -9,6 +9,8 @@ export HUBFLOW
 PATH="$HUBFLOW/bin:$PATH"
 hash -r
 
+ghome="$(unset CDPATH; cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
+
 function gut {
   echo "> git" "$@" 1>&2
   $(type -P git) "$@"
