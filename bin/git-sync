@@ -21,24 +21,34 @@ DEFINE_boolean "tags" "$FLAGS_FALSE" "push all tags?" "t"
 function main {
   local nm_branch="$(gut status -sb | awk '$1 == "##" { print $2 }' | cut -d. -f1)"
 
+  local fl_secondary="$(git remote -v | grep "^secondary\t")"
+
   if [[ "$FLAGS_all" = "$FLAGS_TRUE" ]]; then
     gut push --all primary
-    gut push --all secondary || true
+    if [[ -n "$fl_secondary" ]]; then
+      gut push --all secondary || true
+    fi
   else
     if [[ "$#" > 0 ]]; then
       for br in "$@"; do
         gut push primary $br
-        gut push secondary $br || true
+        if [[ -n "$fl_secondary" ]]; then
+          gut push secondary $br || true
+        fi
       done
     else
       gut push primary $nm_branch
-      gut push secondary $nm_branch || true
+      if [[ -n "$fl_secondary" ]]; then
+        gut push secondary $nm_branch || true
+      fi
     fi
   fi
 
   if [[ "$FLAGS_tags" = "$FLAGS_TRUE" ]]; then
     gut push --tags primary
-    gut push --tags secondary || true
+    if [[ -n "$fl_secondary" ]]; then
+      gut push --tags secondary || true
+    fi
   fi
 
   gut fetch origin
