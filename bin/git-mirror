@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#/ NAME
+#/     git bump -- increments a semver in a file or in git tags
+#/
+#/ SYNOPSIS
+#/     git bump [major|minor|patch]
+#/     git bump 1.2.3
+#/     git bump
+#/       without arguments is equivalent to 'bump patch'
+
+# figure out the project root under which bin, lib live
+shome="$(unset CDPATH; cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
+
+# load a jason bourne library
+source "$shome/libexec/_jason"
+require paul
+
+# entry point
+function main {
+  local short="$1"; shift
+  local url_repo="git@github.com:$short"; shift
+  local nm_repo="$(basename $url_repo .git)"
+
+  mkdir -p ~/$short.git
+  git clone --mirror $url_repo ~/$short.git
+  ln -nfs ${nm_repo}.git ~/$short
+}
+
+require sub "$BASH_SOURCE" "$@"
