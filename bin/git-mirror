@@ -19,7 +19,7 @@ require paul
 # entry point
 function main {
   local short="$1"; shift
-  local url_repo="git@github.com:$short"; shift
+  local url_repo="git@github.com:$short"
   local nm_repo="$(basename $url_repo .git)"
 
   mkdir -p ~/$short.git
