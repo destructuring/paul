@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "$@" >> "$HOME/.ssh-wrapper"
 host="$1"; shift
 set -x
 exec ssh ${GIT_HOST:-$host} "$@"
