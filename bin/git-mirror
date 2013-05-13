@@ -24,7 +24,6 @@ function main {
 
   mkdir -p ~/$short.git
   git clone --mirror $url_repo ~/$short.git
-  ln -nfs ${nm_repo}.git ~/$short
 }
 
 require sub "$BASH_SOURCE" "$@"
