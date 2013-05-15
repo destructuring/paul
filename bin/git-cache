@@ -1,74 +1,28 @@
 #!/bin/bash
 
 #/ NAME
-#/     git-cache -- run git serve and then sync git repo to a remote host
+#/     git cache -- uses a git cache
 #/
 #/ SYNOPSIS
-#/     git cache server
+#/     git cache -R dir GIT COMMANDS ARGS
 
 # figure out the project root under which bin, lib live
-shome="$(unset CDPATH; cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+shome="$(unset CDPATH; cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
 
-# load a meat library
+# load a jason bourne library
 source "$shome/libexec/_jason"
 require paul
 
+DEFINE_string "repos" "." "Root of repositories" "R"
+DEFINE_string "remote" "$LOGNAME@localhost" "SSH remote host"
+
 # entry point
 function main {
-  if [[ "$#" = 0 ]]; then
-    logger_fatal "must specify a server"
-    exit 1
-  fi
+  export GIT_HOST="$FLAGS_remote"
+  export GIT_SSH="$shome/libexec/ssh-wrapper"
 
-  : ${_HF_CACHE:=}
-  if [[ -z "$_HF_CACHE" ]]; then
-    _HF_CACHE=1 git serve git cache "$@"
-  else
-    git_cache "$@"
-  fi
+  cd "$FLAGS_repos"
+  exec git "$@"
 }
 
-function git_cache {
-  local git_port="${!#}"
-
-  set "${@:1:$(($# - 1))}"
-  local nm_remote="$1"; shift
-  local pth_control="$HOME/.ssh/master-%r@%h:%p-$git_port"
-  local pth_cache=".cache/$(basename "$(git config --list | grep remote.origin.url | cut -d= -f2-)")"
-
-  local attempts=0
-  while true; do
-    attempts="$((attempts + 1))"
-    if [[ "$attempts" > 5 ]]; then
-      exit 1
-    fi
-    ssh -n -o ControlPath=$pth_control -o ControlMaster=auto -o ExitOnForwardFailure=yes -R0:localhost:$git_port -N -f $nm_remote > $git_port.txt 2>&1
-    if ssh -n -o ControlPath=$pth_control -O check $nm_remote; then
-      break
-    fi
-  done
-
-  local remote_port="$(awk '$1 == "Allocated" { print $3 }' $git_port.txt)"
-  rm -f $git_port.txt
-
-  local git_head
-  local git_ref=$(cat .git/HEAD)
-  if echo "$git_ref" | egrep -q "^ref:"; then
-    git_head=$(git show-ref --hash "$(echo "$git_ref" | awk '{print $2}')")
-  else
-    git_head=$git_ref
-  fi
-
-  local timestamp="cache$(date +%s)"
-
-  ssh -n -o ControlPath=$pth_control $nm_remote "mkdir -p $pth_cache && cd $pth_cache && { [[ -d .git ]] || git init --bare; } && git remote add $timestamp git://localhost:$remote_port/ && git fetch -q $timestamp && git tag $timestamp $git_head"
-  ssh -n -o ControlPath=$pth_control -O exit $nm_remote
-  echo "HEAD $git_head tagged as $timestamp"
-}
-
-# parse the command-line
-parse_command_line "$@" || exit $?
-eval set -- "${FLAGS_ARGV}"
-
-# pass arguments to entry point
-main "$@"
+require sub "$BASH_SOURCE" "$@"
