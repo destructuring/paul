@@ -4,7 +4,7 @@
 #/     git cache -- uses a git cache
 #/
 #/ SYNOPSIS
-#/     git cache -R dir GIT COMMANDS ARGS
+#/     git cache GIT COMMANDS ARGS
 
 # figure out the project root under which bin, lib live
 shome="$(unset CDPATH; cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
