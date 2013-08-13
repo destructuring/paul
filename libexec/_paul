@@ -26,7 +26,8 @@ function git {
   done
   set -- "${arg[@]}"
 
-  if [[ -x "$HUBFLOW/bin/hub" ]]; then
+  local cmd_ruby="$(which ruby 2>&- || true)"
+  if [[ -x "$HUBFLOW/bin/hub" && -x "$cmd_ruby" ]]; then
     "$HUBFLOW/bin/hub" "$@"
   else
     hash -r
