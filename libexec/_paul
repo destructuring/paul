@@ -19,6 +19,13 @@ function gut {
 }
 
 function git {
+  local arg=()
+  while [[ "$#" > 0 ]]; do 
+    arg[${#arg[@]}]="$(echo "$1" | sed 's#git://github.com/#git@github.com:#; s#https://github.com/#git@github.com:#')"
+    shift
+  done
+  set -- "${arg[@]}"
+
   if [[ -x "$HUBFLOW/bin/hub" ]]; then
     "$HUBFLOW/bin/hub" "$@"
   else
