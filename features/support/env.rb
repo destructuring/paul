@@ -1,6 +1,5 @@
 require 'aruba/cucumber'
 require 'fileutils'
-require 'hub/context'
 require 'forwardable'
 
 # needed to avoid "Too many open files" on 1.8.7
@@ -11,10 +10,7 @@ Aruba::Process.class_eval do
   end
 end
 
-unless system_git = Hub::Context.which('git')
-  abort "Error: `git` not found in PATH"
-end
-
+system_git = `which git 2>/dev/null`.chomp
 lib_dir = File.expand_path('../../../lib', __FILE__)
 bin_dir = File.expand_path('../fakebin', __FILE__)
 
@@ -37,6 +33,15 @@ Before do
   set_env 'HUB_SYSTEM_GIT', system_git
   # ensure that api.github.com is actually never hit in tests
   set_env 'HUB_TEST_HOST', '127.0.0.1:0'
+  # ensure we use fakebin `open` to test browsing
+  set_env 'BROWSER', 'open'
+
+  author_name  = "Hub"
+  author_email = "hub@test.local"
+  set_env 'GIT_AUTHOR_NAME',     author_name
+  set_env 'GIT_COMMITTER_NAME',  author_name
+  set_env 'GIT_AUTHOR_EMAIL',    author_email
+  set_env 'GIT_COMMITTER_EMAIL', author_email
 
   FileUtils.mkdir_p ENV['HOME']
 
@@ -128,9 +133,7 @@ World Module.new {
   end
 
   def empty_commit
-    run_silent "git commit --quiet -m ''" <<
-      " --allow-empty --allow-empty-message" <<
-      " --author 'Hub <hub@test.local>'"
+    run_silent "git commit --quiet -m '' --allow-empty --allow-empty-message"
   end
 
   # Aruba unnecessarily creates new Announcer instance on each invocation

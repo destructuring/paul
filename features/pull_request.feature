@@ -3,6 +3,13 @@ Feature: hub pull-request
     Given I am in "dotfiles" git repo
     And I am "mislav" on github.com with OAuth token "OTOKEN"
 
+  Scenario: Detached HEAD
+    Given the "origin" remote has url "git://github.com/mislav/coral.git"
+    And I am in detached HEAD
+    When I run `hub pull-request`
+    Then the stderr should contain "Aborted: not currently on any branch.\n"
+    And the exit status should be 1
+
   Scenario: Non-GitHub repo
     Given the "origin" remote has url "mygh:Manganeez/repo.git"
     When I run `hub pull-request`
@@ -46,4 +53,30 @@ Feature: hub pull-request
       }
       """
     When I successfully run `hub pull-request ăéñøü`
+    Then the output should contain exactly "the://url\n"
+
+  Scenario: Non-existing base
+    Given the "origin" remote has url "git://github.com/mislav/coral.git"
+    Given the GitHub API server:
+      """
+      post('/repos/origin/coral/pulls') { 404 }
+      """
+    When I run `hub pull-request -b origin:master hereyougo`
+    Then the exit status should be 1
+    Then the stderr should contain:
+      """
+      Error creating pull request: Not Found (HTTP 404)
+      Are you sure that github.com/origin/coral exists?
+      """
+
+  Scenario: Supplies User-Agent string to API calls
+    Given the "origin" remote has url "git://github.com/mislav/coral.git"
+    Given the GitHub API server:
+      """
+      post('/repos/mislav/coral/pulls') {
+        halt 400 unless request.user_agent.include?('Hub')
+        json :html_url => "the://url"
+      }
+      """
+    When I successfully run `hub pull-request useragent`
     Then the output should contain exactly "the://url\n"

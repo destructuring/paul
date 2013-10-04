@@ -35,7 +35,7 @@ module Hub
     extend Context
 
     NAME_RE = /[\w.][\w.-]*/
-    OWNER_RE = /[a-zA-Z0-9-]+/
+    OWNER_RE = /[a-zA-Z0-9][a-zA-Z0-9-]*/
     NAME_WITH_OWNER_RE = /^(?:#{NAME_RE}|#{OWNER_RE}\/#{NAME_RE})$/
 
     CUSTOM_COMMANDS = %w[alias create browse compare fork pull-request]
@@ -80,6 +80,10 @@ module Hub
       force = explicit_owner = false
       base_project = local_repo.main_project
       head_project = local_repo.current_project
+
+      unless current_branch
+        abort "Aborted: not currently on any branch."
+      end
 
       unless base_project
         abort "Aborted: the origin remote doesn't point to a GitHub repository."
@@ -185,7 +189,12 @@ module Hub
       args.executable = 'echo'
       args.replace [pull['html_url']]
     rescue GitHubAPI::Exceptions
-      display_api_exception("creating pull request", $!.response)
+      response = $!.response
+      display_api_exception("creating pull request", response)
+      if 404 == response.status
+        base_url = base_project.web_url.split('://', 2).last
+        warn "Are you sure that #{base_url} exists?"
+      end
       exit 1
     end
 
@@ -202,7 +211,7 @@ module Hub
     # > git clone git@github.com:YOUR_LOGIN/hemingway.git
     def clone(args)
       ssh = args.delete('-p')
-      has_values = /^(--(upload-pack|template|depth|origin|branch|reference)|-[ubo])$/
+      has_values = /^(--(upload-pack|template|depth|origin|branch|reference|name)|-[ubo])$/
 
       idx = 1
       while idx < args.length
@@ -231,23 +240,13 @@ module Hub
     # $ hub submodule add -p wycats/bundler vendor/bundler
     # > git submodule add git@github.com:wycats/bundler.git vendor/bundler
     #
-    # $ hub submodule add -b ryppl ryppl/pip vendor/bundler
-    # > git submodule add -b ryppl git://github.com/ryppl/pip.git vendor/pip
+    # $ hub submodule add -b ryppl --name pip ryppl/pip vendor/pip
+    # > git submodule add -b ryppl --name pip git://github.com/ryppl/pip.git vendor/pip
     def submodule(args)
       return unless index = args.index('add')
       args.delete_at index
 
-      branch = args.index('-b') || args.index('--branch')
-      if branch
-        args.delete_at branch
-        branch_name = args.delete_at branch
-      end
-
       clone(args)
-
-      if branch_name
-        args.insert branch, '-b', branch_name
-      end
       args.insert index, 'add'
     end
 
@@ -317,7 +316,7 @@ module Hub
       end
 
       projects = names.map { |name|
-        unless name =~ /\W/ or remotes.include?(name) or remotes_group(name)
+        unless name !~ /^#{OWNER_RE}$/ or remotes.include?(name) or remotes_group(name)
           project = github_project(nil, name)
           repo_info = api_client.repo_info(project)
           if repo_info.success?
@@ -635,7 +634,7 @@ module Hub
             abort "Usage: hub compare [USER] [<START>...]<END>"
           end
         else
-          sha_or_tag = /(\w{1,2}|\w[\w.-]+\w)/
+          sha_or_tag = /((?:#{OWNER_RE}:)?\w[\w.-]+\w)/
           # replaces two dots with three: "sha1...sha2"
           range = args.pop.sub(/^#{sha_or_tag}\.\.#{sha_or_tag}$/, '\1...\2')
           project = if owner = args.pop then github_project(nil, owner)

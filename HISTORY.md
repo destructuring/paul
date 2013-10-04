@@ -1,3 +1,15 @@
+## 1.10.6 (2013-04-25)
+
+* compensate for new GitHub API enforcement
+* fix asking for password on Ruby <= 1.8.6
+* fix `fetch` for forks where username contains a dash
+
+## 1.10.5 (2013-03-02)
+
+* helpful `pull-request` error message when base project is invalid
+* fix `compare` for ranges containing "owner:branch" notation
+* enable `--name` argument for `submodule add`
+
 ## 1.10.4 (2012-12-29)
 
 * fixes for Windows
