@@ -1,0 +1,40 @@
+#!/bin/bash
+
+#/ NAME
+#/     git pr -- fetch one PR from github
+#/
+#/ SYNOPSIS
+#/     git pr PR#
+
+# figure out the project root under which bin, lib live
+shome="$(unset CDPATH; cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
+
+# load a meat library
+source "$shome/libexec/_jason"
+require paul
+
+# entry point
+function main {
+  if [[ "$#" == 0 ]]; then
+    logger_fatal "mising PR#"
+    display_help
+    exit 1
+  fi
+
+  if [[ "$#" != 1 ]]; then
+    logger_fatal "only need the PR#"
+    display_help
+    exit 1
+  fi
+
+  local pr="$1"; shift
+
+  git fetch origin refs/pull/$pr/head:pr/$pr
+}
+
+# parse the command-line
+parse_command_line "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+# pass arguments to entry point
+main "$@"
