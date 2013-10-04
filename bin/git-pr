@@ -30,6 +30,7 @@ function main {
   local pr="$1"; shift
 
   git fetch origin refs/pull/$pr/head:pr/$pr
+  git checkout pr/$pr
 }
 
 # parse the command-line

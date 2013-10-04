@@ -23,16 +23,8 @@ function main {
 
   local pr="$(basename $(git rev-parse --abbrev-ref HEAD))"
 
-  case "$pr" in
-    [0123456789][0123456789]+)
-      git fetch
-      git merge $(git ls-remote origin refs/pull/$pr/head)
-      ;;
-    *)
-      logger_fatal "pr must be a number"
-      exit 1
-      ;;
-  esac
+  git fetch
+  git merge $(git ls-remote origin refs/pull/$pr/head | awk '{print $1}')
 }
 
 # parse the command-line
