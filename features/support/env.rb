@@ -2,14 +2,6 @@ require 'aruba/cucumber'
 require 'fileutils'
 require 'forwardable'
 
-# needed to avoid "Too many open files" on 1.8.7
-Aruba::Process.class_eval do
-  def close_streams
-    @out.close
-    @err.close
-  end
-end
-
 system_git = `which git 2>/dev/null`.chomp
 lib_dir = File.expand_path('../../../lib', __FILE__)
 bin_dir = File.expand_path('../fakebin', __FILE__)
@@ -35,6 +27,8 @@ Before do
   set_env 'HUB_TEST_HOST', '127.0.0.1:0'
   # ensure we use fakebin `open` to test browsing
   set_env 'BROWSER', 'open'
+  # sabotage opening a commit message editor interactively
+  set_env 'GIT_EDITOR', 'false'
 
   author_name  = "Hub"
   author_email = "hub@test.local"
@@ -55,7 +49,7 @@ end
 
 After do
   @server.stop if defined? @server and @server
-  processes.each {|_, p| p.close_streams }
+  FileUtils.rm_f("#{bin_dir}/vim")
 end
 
 RSpec::Matchers.define :be_successful_command do
@@ -124,6 +118,14 @@ World Module.new {
     File.open(config, 'w') { |cfg| cfg << YAML.dump(data) }
   end
 
+  define_method(:text_editor_script) do |bash_code|
+    File.open("#{bin_dir}/vim", 'w', 0755) { |exe|
+      exe.puts "#!/bin/bash"
+      exe.puts "set -e"
+      exe.puts bash_code
+    }
+  end
+
   def run_silent cmd
     in_current_dir do
       command = SimpleCommand.run(cmd)
@@ -133,7 +135,7 @@ World Module.new {
   end
 
   def empty_commit
-    run_silent "git commit --quiet -m '' --allow-empty --allow-empty-message"
+    run_silent "git commit --quiet -m empty --allow-empty"
   end
 
   # Aruba unnecessarily creates new Announcer instance on each invocation

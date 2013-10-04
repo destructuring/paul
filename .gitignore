@@ -1,7 +1,7 @@
 *.swp
 *~
 /hub
+tmp/
 .bundle
 vendor/bundle
 /site/_site
-tmp/

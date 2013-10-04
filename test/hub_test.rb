@@ -83,6 +83,7 @@ class HubTest < Test::Unit::TestCase
       'symbolic-ref -q HEAD' => 'refs/heads/master',
       'remote -v' => "origin\tgit://github.com/defunkt/hub.git (fetch)\nmislav\tgit://github.com/mislav/hub.git (fetch)",
       'rev-parse --symbolic-full-name master@{upstream}' => 'refs/remotes/origin/master',
+      'rev-parse --symbolic-full-name origin' => 'refs/remotes/origin/master',
       'config --get --bool hub.http-clone' => 'false',
       'config --get hub.protocol' => nil,
       'config --get-all hub.host' => nil,
@@ -257,46 +258,6 @@ class HubTest < Test::Unit::TestCase
                     "push origin,staging master new-feature"
   end
 
-  def test_pullrequest
-    expected = "Aborted: head branch is the same as base (\"master\")\n" <<
-      "(use `-h <branch>` to specify an explicit pull request head)\n"
-    assert_output expected, "pull-request hereyougo"
-  end
-
-  def test_pullrequest_with_unpushed_commits
-    stub_tracking('master', 'mislav', 'master')
-    stub_command_output "rev-list --cherry-pick --right-only --no-merges mislav/master...", "+abcd1234\n+bcde2345"
-
-    expected = "Aborted: 2 commits are not yet pushed to mislav/master\n" <<
-      "(use `-f` to force submit a pull request anyway)\n"
-    assert_output expected, "pull-request hereyougo"
-  end
-
-  def test_pullrequest_from_branch
-    stub_branch('refs/heads/feature')
-    stub_tracking_nothing('feature')
-
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      with(:body => { 'base' => "master", 'head' => "tpw:feature", 'title' => "hereyougo" }) { |req|
-        req.headers['Content-Length'] == 63
-      }.to_return(:body => mock_pullreq_response(1))
-
-    expected = "https://github.com/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -f"
-  end
-
-  def test_pullrequest_from_tracking_branch
-    stub_branch('refs/heads/feature')
-    stub_tracking('feature', 'mislav', 'yay-feature')
-
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      with(:body => {'base' => "master", 'head' => "mislav:yay-feature", 'title' => "hereyougo" }).
-      to_return(:body => mock_pullreq_response(1))
-
-    expected = "https://github.com/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -f"
-  end
-
   def test_pullrequest_from_branch_tracking_local
     stub_branch('refs/heads/feature')
     stub_tracking('feature', 'refs/heads/master')
@@ -306,16 +267,7 @@ class HubTest < Test::Unit::TestCase
       to_return(:body => mock_pullreq_response(1))
 
     expected = "https://github.com/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -f"
-  end
-
-  def test_pullrequest_invalid_remote
-    stub_repo_url('gh:singingwolfboy/sekrit.git')
-    stub_branch('refs/heads/feature')
-    stub_tracking('feature', 'origin', 'feature')
-
-    expected = "Aborted: the origin remote doesn't point to a GitHub repository.\n"
-    assert_output expected, "pull-request hereyougo"
+    assert_output expected, "pull-request -m hereyougo -f"
   end
 
   def test_pullrequest_enterprise_no_tracking
@@ -333,132 +285,7 @@ class HubTest < Test::Unit::TestCase
       to_return(:body => mock_pullreq_response(1, 'api/v3/defunkt/hub', 'git.my.org'))
 
     expected = "https://git.my.org/api/v3/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -f"
-  end
-
-  def test_pullrequest_explicit_head
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      with(:body => {'base' => "master", 'head' => "tpw:yay-feature", 'title' => "hereyougo" }).
-      to_return(:body => mock_pullreq_response(1))
-
-    expected = "https://github.com/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -h yay-feature -f"
-  end
-
-  def test_pullrequest_explicit_head_with_owner
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      with(:body => {'base' => "master", 'head' => "mojombo:feature", 'title' => "hereyougo" }).
-      to_return(:body => mock_pullreq_response(1))
-
-    expected = "https://github.com/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -h mojombo:feature -f"
-  end
-
-  def test_pullrequest_explicit_base
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      with(:body => {'base' => "feature", 'head' => "defunkt:master", 'title' => "hereyougo" }).
-      to_return(:body => mock_pullreq_response(1))
-
-    expected = "https://github.com/defunkt/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -b feature -f"
-  end
-
-  def test_pullrequest_explicit_base_with_owner
-    stub_request(:post, "https://api.github.com/repos/mojombo/hub/pulls").
-      with(:body => {'base' => "feature", 'head' => "defunkt:master", 'title' => "hereyougo" }).
-      to_return(:body => mock_pullreq_response(1, 'mojombo/hub'))
-
-    expected = "https://github.com/mojombo/hub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -b mojombo:feature -f"
-  end
-
-  def test_pullrequest_explicit_base_with_repo
-    stub_request(:post, "https://api.github.com/repos/mojombo/hubbub/pulls").
-      with(:body => {'base' => "feature", 'head' => "defunkt:master", 'title' => "hereyougo" }).
-      to_return(:body => mock_pullreq_response(1, 'mojombo/hubbub'))
-
-    expected = "https://github.com/mojombo/hubbub/pull/1\n"
-    assert_output expected, "pull-request hereyougo -b mojombo/hubbub:feature -f"
-  end
-
-  def test_pullrequest_existing_issue
-    stub_branch('refs/heads/myfix')
-    stub_tracking('myfix', 'mislav', 'awesomefix')
-    stub_command_output "rev-list --cherry-pick --right-only --no-merges mislav/awesomefix...", nil
-
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      with(:body => {'base' => "master", 'head' => "mislav:awesomefix", 'issue' => '92' }).
-      to_return(:body => mock_pullreq_response(92))
-
-    expected = "https://github.com/defunkt/hub/pull/92\n"
-    assert_output expected, "pull-request -i 92"
-  end
-
-  def test_pullrequest_existing_issue_url
-    stub_branch('refs/heads/myfix')
-    stub_tracking('myfix', 'mislav', 'awesomefix')
-    stub_command_output "rev-list --cherry-pick --right-only --no-merges mislav/awesomefix...", nil
-
-    stub_request(:post, "https://api.github.com/repos/mojombo/hub/pulls").
-      with(:body => {'base' => "master", 'head' => "mislav:awesomefix", 'issue' => '92' }).
-      to_return(:body => mock_pullreq_response(92, 'mojombo/hub'))
-
-    expected = "https://github.com/mojombo/hub/pull/92\n"
-    assert_output expected, "pull-request https://github.com/mojombo/hub/issues/92#comment_4"
-  end
-
-  def test_pullrequest_fails
-    stub_request(:post, "https://api.github.com/repos/defunkt/hub/pulls").
-      to_return(:status => [422, "Unprocessable Entity"],
-                :headers => {"Content-type" => "application/json"},
-                :body => %({"message":["oh no!\\nit failed."]}))
-
-    expected = "Error creating pull request: Unprocessable Entity (HTTP 422)\n"
-    expected << "oh no!\nit failed.\n"
-    assert_output expected, "pull-request hereyougo -b feature -f"
-  end
-
-  def test_checkout_no_changes
-    assert_forwarded "checkout master"
-  end
-
-  def test_checkout_pullrequest
-    stub_request(:get, "https://api.github.com/repos/defunkt/hub/pulls/73").
-      to_return(:body => mock_pull_response('blueyed:feature'))
-
-    assert_commands 'git remote add -f -t feature blueyed git://github.com/blueyed/hub.git',
-      'git checkout -f --track -B blueyed-feature blueyed/feature -q',
-      "checkout -f https://github.com/defunkt/hub/pull/73/files -q"
-  end
-
-  def test_checkout_private_pullrequest
-    stub_request(:get, "https://api.github.com/repos/defunkt/hub/pulls/73").
-      to_return(:body => mock_pull_response('blueyed:feature', :private))
-
-    assert_commands 'git remote add -f -t feature blueyed git@github.com:blueyed/hub.git',
-      'git checkout --track -B blueyed-feature blueyed/feature',
-      "checkout https://github.com/defunkt/hub/pull/73/files"
-  end
-
-  def test_checkout_pullrequest_custom_branch
-    stub_request(:get, "https://api.github.com/repos/defunkt/hub/pulls/73").
-      to_return(:body => mock_pull_response('blueyed:feature'))
-
-    assert_commands 'git remote add -f -t feature blueyed git://github.com/blueyed/hub.git',
-      'git checkout --track -B review blueyed/feature',
-      "checkout https://github.com/defunkt/hub/pull/73/files review"
-  end
-
-  def test_checkout_pullrequest_existing_remote
-    stub_command_output 'remote', "origin\nblueyed"
-
-    stub_request(:get, "https://api.github.com/repos/defunkt/hub/pulls/73").
-      to_return(:body => mock_pull_response('blueyed:feature'))
-
-    assert_commands 'git remote set-branches --add blueyed feature',
-      'git fetch blueyed +refs/heads/feature:refs/remotes/blueyed/feature',
-      'git checkout --track -B blueyed-feature blueyed/feature',
-      "checkout https://github.com/defunkt/hub/pull/73/files"
+    assert_output expected, "pull-request -m hereyougo -f"
   end
 
   def test_version
@@ -495,15 +322,20 @@ class HubTest < Test::Unit::TestCase
   end
 
   def test_help_hub
-    help_manpage = hub("help hub")
+    help_manpage = strip_man_escapes hub("help hub")
     assert_includes "git + hub = github", help_manpage
     assert_includes "Hub will prompt for GitHub username & password", help_manpage.gsub(/ {2,}/, ' ')
   end
 
   def test_help_flag_on_command
-    help_manpage = hub("browse --help")
+    help_manpage = strip_man_escapes hub("browse --help")
     assert_includes "git + hub = github", help_manpage
     assert_includes "git browse", help_manpage
+  end
+
+  def test_help_custom_command
+    help_manpage = strip_man_escapes hub("help fork")
+    assert_includes "git fork [--no-remote]", help_manpage
   end
 
   def test_help_short_flag_on_command
@@ -512,7 +344,7 @@ class HubTest < Test::Unit::TestCase
     assert_equal expected, usage_help
 
     usage_help = hub("pull-request -h")
-    expected = "Usage: git pull-request [-f] [TITLE|-i ISSUE] [-b BASE] [-h HEAD]\n"
+    expected = "Usage: git pull-request [-f] [-m MESSAGE|-F FILE|-i ISSUE|ISSUE-URL] [-b BASE] [-h HEAD]\n"
     assert_equal expected, usage_help
   end
 
@@ -714,6 +546,10 @@ class HubTest < Test::Unit::TestCase
       ensure
         config_file.unlink
       end
+    end
+
+    def strip_man_escapes(manpage)
+      manpage.gsub(/_\010/, '').gsub(/\010./, '')
     end
 
 end

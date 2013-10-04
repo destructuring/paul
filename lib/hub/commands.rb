@@ -38,7 +38,7 @@ module Hub
     OWNER_RE = /[a-zA-Z0-9][a-zA-Z0-9-]*/
     NAME_WITH_OWNER_RE = /^(?:#{NAME_RE}|#{OWNER_RE}\/#{NAME_RE})$/
 
-    CUSTOM_COMMANDS = %w[alias create browse compare fork pull-request]
+    CUSTOM_COMMANDS = %w[alias create browse compare fork pull-request ci-status]
 
     def run(args)
       slurp_global_flags(args)
@@ -68,6 +68,38 @@ module Hub
       end
     rescue Context::FatalError => err
       abort "fatal: #{err.message}"
+    end
+
+
+    # $ hub ci-status
+    # $ hub ci-status 6f6d9797f9d6e56c3da623a97cfc3f45daf9ae5f
+    # $ hub ci-status master
+    # $ hub ci-status origin/master
+    def ci_status(args)
+      args.shift
+      ref = args.words.first || 'HEAD'
+
+      unless head_project = local_repo.current_project
+        abort "Aborted: the origin remote doesn't point to a GitHub repository."
+      end
+
+      unless sha = local_repo.git_command("rev-parse -q #{ref}")
+        abort "Aborted: no revision could be determined from '#{ref}'"
+      end
+
+      statuses = api_client.statuses(head_project, sha)
+      status = statuses.first
+      ref_state = status ? status['state'] : 'no status'
+
+      exit_code = case ref_state
+        when 'success'          then 0
+        when 'failure', 'error' then 1
+        when 'pending'          then 2
+        else 3
+        end
+
+      $stdout.puts ref_state
+      exit exit_code
     end
 
     # $ hub pull-request
@@ -101,6 +133,13 @@ module Hub
         case arg
         when '-f'
           force = true
+        when '-F', '--file'
+          file = args.shift
+          text = file == '-' ? $stdin.read : File.read(file)
+          options[:title], options[:body] = read_msg(text)
+        when '-m', '--message'
+          text = args.shift
+          options[:title], options[:body] = read_msg(text)
         when '-b'
           base_project, options[:base] = from_github_ref.call(args.shift, base_project)
         when '-h'
@@ -113,7 +152,10 @@ module Hub
           if url = resolve_github_url(arg) and url.project_path =~ /^issues\/(\d+)/
             options[:issue] = $1
             base_project = url.project
-          elsif !options[:title] then options[:title] = arg
+          elsif !options[:title]
+            options[:title] = arg
+            warn "hub: Specifying pull request title without a flag is deprecated."
+            warn "Please use one of `-m' or `-F' options."
           else
             abort "invalid argument: #{arg}"
           end
@@ -174,8 +216,9 @@ module Hub
             [format, base_branch, remote_branch]
         end
 
-        options[:title], options[:body] = pullrequest_editmsg(commit_summary) { |msg|
-          msg.puts default_message if default_message
+        options[:title], options[:body] = pullrequest_editmsg(commit_summary) { |msg, initial_message|
+          initial_message ||= default_message
+          msg.puts initial_message if initial_message
           msg.puts ""
           msg.puts "# Requesting a pull to #{base_project.owner}:#{options[:base]} from #{options[:head]}"
           msg.puts "#"
@@ -196,6 +239,8 @@ module Hub
         warn "Are you sure that #{base_url} exists?"
       end
       exit 1
+    else
+      delete_editmsg
     end
 
     # $ hub clone rtomayko/tilt
@@ -600,12 +645,13 @@ module Hub
 
         abort "Usage: hub browse [<USER>/]<REPOSITORY>" unless project
 
+        require 'cgi'
         # $ hub browse -- wiki
         path = case subpage = args.shift
         when 'commits'
-          "/commits/#{branch.short_name}"
+          "/commits/#{branch_in_url(branch)}"
         when 'tree', NilClass
-          "/tree/#{branch.short_name}" if branch and !branch.master?
+          "/tree/#{branch_in_url(branch)}" if branch and !branch.master?
         else
           "/#{subpage}"
         end
@@ -662,23 +708,23 @@ module Hub
 
       if script
         puts "alias git=hub"
-        if 'zsh' == shell
-          puts "if type compdef >/dev/null; then"
-          puts "   compdef hub=git"
-          puts "fi"
-        end
       else
         profile = case shell
           when 'bash' then '~/.bash_profile'
           when 'zsh'  then '~/.zshrc'
           when 'ksh'  then '~/.profile'
+          when 'fish' then '~/.config/fish/config.fish'
           else
             'your profile'
           end
 
         puts "# Wrap git automatically by adding the following to #{profile}:"
         puts
-        puts 'eval "$(hub alias -s)"'
+        if shell == 'fish'
+          puts 'eval (hub alias -s)'
+        else
+          puts 'eval "$(hub alias -s)"'
+        end
       end
 
       exit
@@ -697,13 +743,19 @@ module Hub
     def help(args)
       command = args.words[1]
 
-      if command == 'hub'
+      if command == 'hub' || custom_command?(command)
         puts hub_manpage
         exit
-      elsif command.nil? && !args.has_flag?('-a', '--all')
-        ENV['GIT_PAGER'] = '' unless args.has_flag?('-p', '--paginate') # Use `cat`.
-        puts improved_help_text
-        exit
+      elsif command.nil?
+        if args.has_flag?('-a', '--all')
+          # Add the special hub commands to the end of "git help -a" output.
+          args.after 'echo', ["\nhub custom commands\n"]
+          args.after 'echo', CUSTOM_COMMANDS.map {|cmd| "  #{cmd}" }
+        else
+          ENV['GIT_PAGER'] = '' unless args.has_flag?('-p', '--paginate') # Use `cat`.
+          puts improved_help_text
+          exit
+        end
       end
     end
     alias_method "--help", :help
@@ -714,12 +766,17 @@ module Hub
     # from the command line.
     #
 
+    def branch_in_url(branch)
+      require 'cgi'
+      CGI.escape(branch.short_name).gsub("%2F", "/")
+    end
+
     def api_client
       @api_client ||= begin
         config_file = ENV['HUB_CONFIG'] || '~/.config/hub'
         file_store = GitHubAPI::FileStore.new File.expand_path(config_file)
         file_config = GitHubAPI::Configuration.new file_store
-        GitHubAPI.new file_config, :app_url => 'http://defunkt.io/hub/'
+        GitHubAPI.new file_config, :app_url => 'http://hub.github.com/'
       end
     end
 
@@ -800,6 +857,7 @@ GitHub Commands:
    create         Create this repository on GitHub and add GitHub as origin
    browse         Open a GitHub page in the default browser
    compare        Open a compare page on GitHub
+   ci-status      Show the CI status of a commit
 
 See 'git help <command>' for more information on a specific command.
 help
@@ -882,7 +940,8 @@ help
     # in order to turn our raw roff (manpage markup) into something
     # readable on the terminal.
     def groff_command
-      "groff -Wall -mtty-char -mandoc -Tascii"
+      cols = terminal_width
+      "groff -Wall -mtty-char -mandoc -Tascii -rLL=#{cols}n -rLT=#{cols}n"
     end
 
     # Returns the raw hub manpage. If we're not running in standalone
@@ -926,7 +985,8 @@ help
         Kernel.select [STDIN]
 
         pager = ENV['GIT_PAGER'] ||
-          `git config --get-all core.pager`.split.first || ENV['PAGER'] ||
+          `git config --get-all core.pager`.split("\n").first ||
+          ENV['PAGER'] ||
           'less -isr'
 
         pager = 'cat' if pager.empty?
@@ -944,22 +1004,51 @@ help
     end
 
     def pullrequest_editmsg(changes)
-      message_file = File.join(git_dir, 'PULLREQ_EDITMSG')
+      message_file = pullrequest_editmsg_file
+
+      if valid_editmsg_file?(message_file)
+        title, body = read_editmsg(message_file)
+        previous_message = [title, body].compact.join("\n\n") if title
+      end
+
       File.open(message_file, 'w') { |msg|
-        yield msg
+        yield msg, previous_message
         if changes
           msg.puts "#\n# Changes:\n#"
           msg.puts changes.gsub(/^/, '# ').gsub(/ +$/, '')
         end
       }
+
       edit_cmd = Array(git_editor).dup
-      edit_cmd << '-c' << 'set ft=gitcommit' if edit_cmd[0] =~ /^[mg]?vim$/
+      edit_cmd << '-c' << 'set ft=gitcommit tw=0 wrap lbr' if edit_cmd[0] =~ /^[mg]?vim$/
       edit_cmd << message_file
       system(*edit_cmd)
-      abort "can't open text editor for pull request message" unless $?.success?
+
+      unless $?.success?
+        # writing was cancelled, or the editor never opened in the first place
+        delete_editmsg(message_file)
+        abort "error using text editor for pull request message"
+      end
+
       title, body = read_editmsg(message_file)
       abort "Aborting due to empty pull request title" unless title
       [title, body]
+    end
+
+    # This unfortunate hack is because older versions of hub never cleaned up
+    # the pullrequest_editmsg_file, which newer hub would pick up and
+    # misinterpret as a message which should be reused after a failed PR.
+    def valid_editmsg_file?(message_file)
+      File.exists?(message_file) &&
+        File.mtime(message_file) > File.mtime(__FILE__)
+    end
+
+    def read_msg(message)
+      message.split("\n\n", 2).each {|s| s.strip! }.reject {|s| s.empty? }
+    end
+
+    def pullrequest_editmsg_file
+      File.join(git_dir, 'PULLREQ_EDITMSG')
     end
 
     def read_editmsg(file)
@@ -977,6 +1066,10 @@ help
       [title =~ /\S/ ? title : nil, body =~ /\S/ ? body : nil]
     end
 
+    def delete_editmsg(file = pullrequest_editmsg_file)
+      File.delete(file) if File.exist?(file)
+    end
+
     def expand_alias(cmd)
       if expanded = git_alias_for(cmd)
         if expanded.index('!') != 0
@@ -985,7 +1078,7 @@ help
         end
       end
     end
-    
+
     def display_api_exception(action, response)
       $stderr.puts "Error #{action}: #{response.message.strip} (HTTP #{response.status})"
       if 422 == response.status and response.error_message?

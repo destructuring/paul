@@ -15,7 +15,7 @@ module Hub
   #     config_file = ENV['HUB_CONFIG'] || '~/.config/hub'
   #     file_store = GitHubAPI::FileStore.new File.expand_path(config_file)
   #     file_config = GitHubAPI::Configuration.new file_store
-  #     GitHubAPI.new file_config, :app_url => 'http://defunkt.io/hub/'
+  #     GitHubAPI.new file_config, :app_url => 'http://hub.github.com/'
   #   end
   class GitHubAPI
     attr_reader :config, :oauth_app_url
@@ -105,6 +105,14 @@ module Hub
 
       res = post "https://%s/repos/%s/%s/pulls" %
         [api_host(project.host), project.owner, project.name], params
+
+      res.error! unless res.success?
+      res.data
+    end
+
+    def statuses project, sha
+      res = get "https://%s/repos/%s/%s/statuses/%s" %
+        [api_host(project.host), project.owner, project.name, sha]
 
       res.error! unless res.success?
       res.data
@@ -257,17 +265,28 @@ module Hub
         end
       end
 
-      def obtain_oauth_token host, user
+      def obtain_oauth_token host, user, two_factor_code = nil
         # first try to fetch existing authorization
-        res = get "https://#{user}@#{host}/authorizations"
-        res.error! unless res.success?
+        res = get "https://#{user}@#{host}/authorizations" do |req|
+          req['X-GitHub-OTP'] = two_factor_code if two_factor_code
+        end
+        unless res.success?
+          if !two_factor_code && res['X-GitHub-OTP'].to_s.include?('required')
+            two_factor_code = config.prompt_auth_code
+            return obtain_oauth_token(host, user, two_factor_code)
+          else
+            res.error!
+          end
+        end
 
         if found = res.data.find {|auth| auth['app']['url'] == oauth_app_url }
           found['token']
         else
           # create a new authorization
           res = post "https://#{user}@#{host}/authorizations",
-            :scopes => %w[repo], :note => 'hub', :note_url => oauth_app_url
+            :scopes => %w[repo], :note => 'hub', :note_url => oauth_app_url do |req|
+              req['X-GitHub-OTP'] = two_factor_code if two_factor_code
+            end
           res.error! unless res.success?
           res.data['token']
         end
@@ -382,6 +401,8 @@ module Hub
       def prompt what
         print "#{what}: "
         $stdin.gets.chomp
+      rescue Interrupt
+        abort
       end
 
       # special prompt that has hidden input
@@ -395,6 +416,15 @@ module Hub
           # in testing
           $stdin.gets.chomp
         end
+      rescue Interrupt
+        abort
+      end
+
+      def prompt_auth_code
+        print "two-factor authentication code: "
+        $stdin.gets.chomp
+      rescue Interrupt
+        abort
       end
 
       NULL = defined?(File::NULL) ? File::NULL :

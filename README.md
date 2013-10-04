@@ -31,16 +31,21 @@ Installing on OS X is easiest with Homebrew:
 $ brew install hub
 ~~~
 
-### Standalone
+### `rake install` from source
 
-`hub` is easily installed as a standalone script:
+This is the preferred installation method without when no package manager that
+supports hub is available:
 
 ~~~ sh
-$ curl http://defunkt.io/hub/standalone -sLo ~/bin/hub &&
-  chmod +x ~/bin/hub
+# Download or clone the project from GitHub:
+$ git clone git://github.com/github/hub.git
+$ cd hub
+$ rake install
 ~~~
 
-Assuming "~/bin/" is in your `$PATH`, you're ready to roll:
+On a Unix-based OS, this installs under `PREFIX`, which is `/usr/local` by default.
+
+Now you should be ready to roll:
 
 ~~~ sh
 $ hub version
@@ -48,10 +53,7 @@ git version 1.7.6
 hub version 1.8.3
 ~~~
 
-#### On Windows
-
-If you have mysysgit, open "Git Bash" and follow the steps above but put the
-`hub` executable in `/bin` instead of `~/bin`.
+#### Windows "Git Bash" (mysysgit) note
 
 Avoid aliasing hub as `git` due to the fact that mysysgit automatically
 configures your prompt to include git information, and you want to avoid slowing
@@ -77,16 +79,6 @@ $ hub hub standalone > ~/bin/hub && chmod +x ~/bin/hub
 
 This installs a standalone version which doesn't require RubyGems to
 run, so it's faster.
-
-### Source
-
-You can also install from source:
-
-~~~ sh
-$ git clone git://github.com/defunkt/hub.git
-$ cd hub
-$ rake install prefix=/usr/local
-~~~
 
 ### Help! It's slow!
 
@@ -153,8 +145,8 @@ eval "$(hub alias -s)"
 hub repository contains tab-completion scripts for bash and zsh. These scripts
 complement existing completion scripts that ship with git.
 
-* [hub bash completion](https://github.com/defunkt/hub/blob/master/etc/hub.bash_completion.sh)
-* [hub zsh completion](https://github.com/defunkt/hub/blob/master/etc/hub.zsh_completion)
+* [hub bash completion](https://github.com/github/hub/blob/master/etc/hub.bash_completion.sh)
+* [hub zsh completion](https://github.com/github/hub/blob/master/etc/hub.zsh_completion)
 
 
 Commands
@@ -238,7 +230,7 @@ superpowers:
     [ opened pull request on GitHub for "YOUR_USER:feature" ]
 
     # explicit title, pull base & head:
-    $ git pull-request "I've implemented feature X" -b defunkt:master -h mislav:feature
+    $ git pull-request -m "Implemented feature X" -b defunkt:master -h mislav:feature
 
     $ git pull-request -i 123
     [ attached pull request to issue #123 ]
@@ -335,6 +327,12 @@ superpowers:
     $ hub submodule add -b ryppl --name pip ryppl/pip vendor/pip
     > git submodule add -b ryppl --name pip git://github.com/ryppl/pip.git vendor/pip
 
+### git ci-status
+
+    $ hub ci-status [commit]
+    > (prints CI state of commit and exits with appropriate code)
+    > One of: success (0), error (1), failure (1), pending (2), no status (3)
+
 
 ### git help
 
@@ -376,7 +374,7 @@ These instructions assume that _you already have hub installed_ and aliased as
 `git` (see "Aliasing").
 
 1. Clone hub:  
-    `git clone defunkt/hub && cd hub`
+    `git clone github/hub && cd hub`
 1. Ensure Bundler is installed:  
     `which bundle || gem install bundler`
 1. Install development dependencies:  
@@ -399,10 +397,10 @@ These instructions assume that _you already have hub installed_ and aliased as
 Meta
 ----
 
-* Home: <https://github.com/defunkt/hub>
-* Bugs: <https://github.com/defunkt/hub/issues>
+* Home: <https://github.com/github/hub>
+* Bugs: <https://github.com/github/hub/issues>
 * Gem: <https://rubygems.org/gems/hub>
-* Authors: <https://github.com/defunkt/hub/contributors>
+* Authors: <https://github.com/github/hub/contributors>
 
 ### Prior art
 
