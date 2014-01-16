@@ -9,7 +9,9 @@ export HUBFLOW
 PATH="$HUBFLOW/bin:$PATH"
 hash -r
 
-export GIT_SSH="$HUBFLOW/libexec/ssh-wrapper"
+if [[ -z "${GIT_SSH:-}" ]]; then
+  export GIT_SSH="$HUBFLOW/libexec/ssh-wrapper"
+fi
 
 ghome="$(unset CDPATH; cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
 
