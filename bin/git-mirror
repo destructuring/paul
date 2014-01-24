@@ -19,11 +19,10 @@ require paul
 # entry point
 function main {
   local short="${1%%.git}"; shift
-  local url_repo="git@github.com:$short"
+  local url_repo="git@github.com:$short.git"
 
   mkdir -p $short.git
   git clone --mirror $url_repo $short.git
-  ln -nfs $(basename $short).git $short
 }
 
 require sub "$BASH_SOURCE" "$@"
