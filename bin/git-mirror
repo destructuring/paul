@@ -23,6 +23,10 @@ function main {
 
   mkdir -p $short.git
   git clone --mirror $url_repo $short.git
+  
+  # can be empty, so at least file to permit upload into s3
+  touch $short.git/branches/.gitignore
+  touch $short.git/refs/.gitignore
 }
 
 require sub "$BASH_SOURCE" "$@"
