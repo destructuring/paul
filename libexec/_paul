@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [[ "$#" > 0 ]]; then
   HUBFLOW="$1"; shift
 else
@@ -17,7 +19,7 @@ ghome="$(unset CDPATH; cd -P -- "./$(git rev-parse --show-cdup)" && pwd -P)"
 
 function gut {
   echo "> git" "$@" 1>&2
-  $(type -P git) "$@"
+  exec $(type -P git) "$@"
 }
 
 function git {
@@ -28,11 +30,6 @@ function git {
   done
   set -- "${arg[@]}"
 
-  local cmd_ruby="$(which ruby 2>&- || true)"
-  if [[ -x "$HUBFLOW/bin/hub" && -x "$cmd_ruby" ]]; then
-    "$HUBFLOW/bin/hub" "$@"
-  else
-    hash -r
-    $(type -P git) "$@"
-  fi
+  hash -r
+  exec $(type -P git) "$@"
 }
